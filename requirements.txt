@@ -1,0 +1,10 @@
+assemblyai==0.38.0
+fastapi==0.115.12
+langchain-core==0.3.49
+langchain-groq==0.3.1
+pydantic==2.8.2
+pydantic-settings==2.8.1
+python-dotenv==1.1.0
+requests==2.32.3
+streamlit==1.44.0
+uvicorn==0.30.1
