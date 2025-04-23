@@ -1,5 +1,12 @@
 # 🎙️ PolyNote - Multilingual Note-Taking Agent
 
+[![Python Version](https://img.shields.io/badge/Python-3.10+-blue)](https://python.org)
+[![Frontend](https://img.shields.io/badge/Frontend-Streamlit-red)](https://streamlit.io/)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI-lightblue)](https://fastapi.tiangolo.com/)
+[![ASR](https://img.shields.io/badge/ASR-AssemblyAI-darkblue)](https://www.assemblyai.com/)
+[![LLM Service](https://img.shields.io/badge/LLM-Groq-black)](https://groq.com/)
+[![LLM Framework](https://img.shields.io/badge/Framework-LangChain-darkgreen)](https://www.langchain.com/)
+
 A powerful AI-powered application that transcribes, summarizes, and extracts action items from multilingual audio/video content. Built with FastAPI and Streamlit, it provides an intuitive interface for processing and analyzing spoken content.
 
 ## 🌟 Features
@@ -14,49 +21,47 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 
 ## 🎥 Demonstration
 
-[Insert video link here]
+[Watch the Demo Video](https://drive.google.com/file/d/1JIEy2PhjRmKbPdTmwWuXhiOcmfhleHq7/view?usp=sharing)
 
 ## 🏗️ Architecture
 
 The application follows a modern microservices architecture:
 
+```mermaid
+graph TD
+    A([👤 User]) -- Interacts via Browser --> B[🖥️ Streamlit Frontend]
+    B -- 🎧 /transcribe (Audio File) --> C{⚙️ FastAPI Backend}
+    B -- 📝 /summarize (Transcript) --> C
+    B -- 📋 /extract-action-items (Transcript) --> C
+    B -- 💬 /chat (Transcript + Query) --> C
+    C -- ⬆️ Upload Audio / Get Transcript --> D[🧠 AssemblyAI API]
+    C -- 🔁 Summarize / Extract / Chat --> E[🤖 Groq API via LangChain]
+    D -- 📄 Transcription Result --> C
+    E -- 🧠 LLM Response --> C
+    C -- 📦 API Response (JSON) --> B
+    B -- 🔍 Search Keyword --> B
+    B -- 📤 Export TXT --> A
+    B -- 📊 Displays Results --> A
 ```
-PolyNote/
-├── src/
-│   ├── api/           # FastAPI endpoints
-│   ├── core/          # Core configuration and utilities
-│   ├── schemas/       # Pydantic models
-│   └── services/      # Business logic and external service integrations
-├── streamlit_app.py   # Streamlit frontend
-└── requirements.txt   # Project dependencies
-```
-
-### Key Components:
-
-1. **Frontend (Streamlit)**
-   - User interface for file upload and interaction
-   - Real-time status updates
-   - Chat interface for transcript queries
-
-2. **Backend (FastAPI)**
-   - RESTful API endpoints
-   - Audio/video processing
-   - LLM integration for summarization and chat
-
-3. **External Services**
-   - AssemblyAI for transcription
-   - Groq LLM for summarization and chat
-   - Temporary file management
 
 ## 🛠️ Tech Stack
 
-- **Backend Framework**: FastAPI
-- **Frontend Framework**: Streamlit
-- **Language Models**: Groq LLM (llama-3.3-70b-versatile)
-- **Transcription Service**: AssemblyAI
-- **API Documentation**: FastAPI auto-generated docs
-- **Dependency Management**: Python virtual environment
-- **Environment Management**: python-dotenv
+```mermaid
+pie title Tech Stack Distribution
+    "Frontend (Streamlit)" : 20
+    "Backend (FastAPI)" : 25
+    "ASR (AssemblyAI)" : 20
+    "LLM (Groq)" : 25
+    "Framework (LangChain)" : 10
+```
+
+### Key Technologies:
+
+- **Frontend**: Streamlit - Modern, interactive web interface
+- **Backend**: FastAPI - High-performance Python web framework
+- **ASR**: AssemblyAI - State-of-the-art speech recognition
+- **LLM**: Groq - Fast and efficient language model inference
+- **Framework**: LangChain - LLM application development framework
 
 ## 🚀 Setup and Installation
 
