@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -21,9 +22,6 @@ wheels/
 *.egg
 
 # Virtual Environment
-.env
-.venv
-env/
 venv/
 ENV/
 
@@ -33,10 +31,14 @@ ENV/
 *.swp
 *.swo
 
-# OS
-.DS_Store
-Thumbs.db
+# Environment variables
+.env
 
-# Project specific
+# Temporary files
 temp_audio/
+*.mp4
+*.wav
+*.mp3
+
+# Logs
 *.log
