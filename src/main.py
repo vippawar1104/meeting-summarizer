@@ -1,6 +1,8 @@
+# src/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core.config import settings, logger
+
+from src.core.config import settings, logger
 from api.endpoints import transcription
 from api.endpoints import llm as llm_router
 
@@ -36,3 +38,4 @@ if __name__ == "__main__":
     import uvicorn
     logger.info("Starting Uvicorn server directly (for debugging)...")
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+

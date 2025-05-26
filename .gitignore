@@ -21,9 +21,11 @@ wheels/
 *.egg
 
 # Virtual Environment
+.env
+.venv
+env/
 venv/
 ENV/
-env/
 
 # IDE
 .idea/
@@ -31,20 +33,10 @@ env/
 *.swp
 *.swo
 
-# Environment variables
-.env
+# OS
+.DS_Store
+Thumbs.db
 
-# Temporary files
+# Project specific
 temp_audio/
-*.mp3
-*.wav
-*.mp4
-*.m4a
-*.ogg
-*.webm
-*.mov
-*.flac
-*.mkv
-
-# Logs
 *.log
