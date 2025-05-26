@@ -42,3 +42,4 @@ temp_audio/
 
 # Logs
 *.log
+.vercel

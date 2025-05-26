@@ -67,30 +67,34 @@ chat_prompt = ChatPromptTemplate.from_template(CHAT_PROMPT_TEMPLATE)
 
 
 # Service Functions
-async def generate_summary(transcript: str) -> SummarizationResponse:
+async def generate_summary(text: str) -> SummarizationResponse:
     """Generates ONLY the summary from the transcript."""
     if not llm:
         raise ConnectionError("LLM service is not available.")
-    if not transcript:
+    if not text:
         raise ValueError("Transcript cannot be empty.")
 
     logger.info(f"Requesting summary from model {settings.GROQ_MODEL_NAME}")
+    logger.debug(f"Transcript length: {len(text)} characters")
     try:
         chain = summary_only_prompt | llm | StrOutputParser()
-        summary_text = await chain.ainvoke({"context": transcript})
+        logger.debug("Calling LLM chain with input...")
+        summary_text = await chain.ainvoke({"context": text})
         logger.info("Summary LLM call successful.")
-
         return SummarizationResponse(summary=summary_text.strip())
     except Exception as e:
-        logger.error(f"Summary generation failed: {e}", exc_info=True)
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"Summary generation failed: {e}")
+        logger.error(tb)
         raise RuntimeError(f"Failed to generate summary: {e}")
 
 
-async def extract_action_items(transcript: str) -> ActionItemsResponse:
+async def extract_action_items(text: str) -> ActionItemsResponse:
     """Extracts ONLY the action items using PydanticOutputParser."""
     if not llm:
         raise ConnectionError("LLM service is not available.")
-    if not transcript:
+    if not text:
         raise ValueError("Transcript cannot be empty.")
 
     logger.info(f"Requesting action items extraction")
@@ -99,7 +103,7 @@ async def extract_action_items(transcript: str) -> ActionItemsResponse:
         chain = action_items_prompt_pydantic | llm | action_items_parser
 
         # The result of invoke IS the parsed Pydantic object
-        parsed_output: ActionItemsResponse = await chain.ainvoke({"context": transcript})
+        parsed_output: ActionItemsResponse = await chain.ainvoke({"context": text})
         logger.info("Action items LLM call and parsing successful.")
 
         # Optional: Filter out any empty strings the LLM might have included
