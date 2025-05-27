@@ -53,31 +53,41 @@ st.markdown("""
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
     
-    /* Animated title with new gradient */
+    /* Animated title with enhanced blur effect */
     h1 {
         text-align: center;
         background: linear-gradient(45deg, #3b82f6, #8b5cf6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
-        animation: glow 2s ease-in-out infinite alternate, float 3s ease-in-out infinite;
+        position: relative;
+        animation: titleFloat 3s ease-in-out infinite;
+        z-index: 1;
     }
     
-    @keyframes float {
-        0% { transform: translateY(0px); }
+    h1::before {
+        content: '🎙️ PolyNote';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        filter: blur(12px);
+        opacity: 0.6;
+        z-index: -1;
+        animation: titleBlur 3s ease-in-out infinite;
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    @keyframes titleFloat {
+        0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
     }
     
-    @keyframes glow {
-        from {
-            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3),
-                         0 0 20px rgba(139, 92, 246, 0.3);
-        }
-        to {
-            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5),
-                         0 0 30px rgba(139, 92, 246, 0.5);
-        }
+    @keyframes titleBlur {
+        0%, 100% { filter: blur(12px); opacity: 0.6; }
+        50% { filter: blur(16px); opacity: 0.4; }
     }
     
     /* Modern button styling with new gradient */
@@ -197,12 +207,6 @@ st.markdown("""
     /* Loading spinner animation */
     .stSpinner > div {
         background: linear-gradient(45deg, #3b82f6, #8b5cf6);
-        animation: pulse 1.5s ease-in-out infinite, rotate 2s linear infinite;
-    }
-    
-    @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
     }
     
     /* Divider with new gradient */
