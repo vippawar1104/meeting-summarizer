@@ -21,7 +21,23 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 
 ## 🎥 Demonstration
 
-[Watch the Demo Video](https://drive.google.com/file/d/1JIEy2PhjRmKbPdTmwWuXhiOcmfhleHq7/view?usp=sharing)
+### Screenshots
+
+#### Main Interface
+![Main Interface](screenshots/main_interface.png)
+*The main interface showing the file upload and transcription area*
+
+#### Transcription View
+![Transcription View](screenshots/transcription_view.png)
+*Real-time transcription display with speaker detection*
+
+#### Summary and Action Items
+![Summary View](screenshots/summary_view.png)
+*Generated summary and extracted action items*
+
+#### Chat Interface
+![Chat Interface](screenshots/chat_interface.png)
+*Interactive chat interface for querying the transcript*
 
 ## 🏗️ Architecture
 
