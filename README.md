@@ -37,7 +37,13 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 
 #### Chat Interface
 ![Chat Interface](screenshots/chat_interface.png)
+
 *Interactive chat interface for querying the transcript*
+## 🎬 Demo Video
+
+[![Watch the Demo](https://img.shields.io/badge/▶️-Click_to_Watch_Demo-ff0000?style=for-the-badge)](https://drive.google.com/file/d/11KDdiyt3EsEeAbZEJTjpLOoaEp-ysaiw/view)
+
+> Click the button above to view the demo hosted on Google Drive.
 
 ## 🏗️ Architecture
 
