@@ -21,7 +21,29 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 
 ## 🎥 Demonstration
 
-[Watch the Demo Video](https://drive.google.com/file/d/1JIEy2PhjRmKbPdTmwWuXhiOcmfhleHq7/view?usp=sharing)
+### Screenshots
+
+#### Main Interface
+![Main Interface](screenshots/main_interface.png)
+*The main interface showing the file upload and transcription area*
+
+#### Transcription View
+![Transcription View](screenshots/transcription_view.png)
+*Real-time transcription display with speaker detection*
+
+#### Summary and Action Items
+![Summary View](screenshots/summary_view.png)
+*Generated summary and extracted action items*
+
+#### Chat Interface
+![Chat Interface](screenshots/chat_interface.png)
+
+*Interactive chat interface for querying the transcript*
+## 🎬 Demo Video
+
+[![Watch the Demo](https://img.shields.io/badge/▶️-Click_to_Watch_Demo-ff0000?style=for-the-badge)](https://drive.google.com/file/d/11KDdiyt3EsEeAbZEJTjpLOoaEp-ysaiw/view)
+
+> Click the button above to view the demo hosted on Google Drive.
 
 ## 🏗️ Architecture
 
@@ -165,10 +187,6 @@ Multilingual-Note-Taking-Agent/
   - Interactive chat interface
   - Summary and action items display
   - Export functionality
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 

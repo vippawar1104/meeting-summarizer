@@ -1,6 +1,8 @@
 # src/main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import os
 
 from src.core.config import settings, logger
 from src.api.endpoints import transcription
@@ -27,12 +29,28 @@ logger.info("CORS middleware added with permissive settings for development.")
 app.include_router(transcription.router, prefix=settings.API_V1_STR)
 app.include_router(llm_router.router, prefix=f"{settings.API_V1_STR}/llm")
 
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint for health check."""
+    return {"status": "healthy", "message": "API is running"}
+
 @app.get("/ping", tags=["Health"])
 async def ping():
     """Basic health check endpoint."""
     logger.info("Ping endpoint called")
     return {"message": "pong"}
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Global exception handler for all unhandled exceptions."""
+    logger.error(f"Unhandled exception: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Please try again later."}
+    )
+
+# Create upload directory if it doesn't exist
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 if __name__ == "__main__":
     import uvicorn

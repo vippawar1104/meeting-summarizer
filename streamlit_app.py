@@ -6,7 +6,7 @@ import os
 
 
 # --- Configuration ---
-FASTAPI_BASE_URL = "http://localhost:8002/api/v1"
+FASTAPI_BASE_URL = "http://localhost:8001/api/v1"
 TRANSCRIPTION_ENDPOINT = f"{FASTAPI_BASE_URL}/transcribe"
 SUMMARIZATION_ENDPOINT = f"{FASTAPI_BASE_URL}/llm/summarize"
 ACTION_ITEMS_ENDPOINT = f"{FASTAPI_BASE_URL}/llm/extract-action-items"
@@ -53,22 +53,50 @@ st.markdown("""
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
     
-    /* Animated title with new gradient */
+    /* Animated title with enhanced blur effect */
     h1 {
         text-align: center;
         color: #8b5cf6;
         font-weight: 800;
+<<<<<<< HEAD
         animation: float 3s ease-in-out infinite;
         text-shadow: 0 0 30px rgba(139, 92, 246, 0.6), 
                      0 0 60px rgba(59, 130, 246, 0.4);
+=======
+        position: relative;
+        animation: titleFloat 3s ease-in-out infinite;
+        z-index: 1;
+>>>>>>> 6cefa57747faf429b0a94f6347efd1e68dfce6bb
     }
     
-    @keyframes float {
-        0% { transform: translateY(0px); }
+    h1::before {
+        content: '🎙️ PolyNote';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        filter: blur(12px);
+        opacity: 0.6;
+        z-index: -1;
+        animation: titleBlur 3s ease-in-out infinite;
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    @keyframes titleFloat {
+        0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
     }
     
+<<<<<<< HEAD
+=======
+    @keyframes titleBlur {
+        0%, 100% { filter: blur(12px); opacity: 0.6; }
+        50% { filter: blur(16px); opacity: 0.4; }
+    }
+    
+>>>>>>> 6cefa57747faf429b0a94f6347efd1e68dfce6bb
     /* Modern button styling with new gradient */
     .stButton>button {
         border-radius: 12px;
@@ -186,12 +214,6 @@ st.markdown("""
     /* Loading spinner animation */
     .stSpinner > div {
         background: linear-gradient(45deg, #3b82f6, #8b5cf6);
-        animation: pulse 1.5s ease-in-out infinite, rotate 2s linear infinite;
-    }
-    
-    @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
     }
     
     /* Divider with new gradient */
