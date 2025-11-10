@@ -4,8 +4,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 
-from src.core.config import settings, logger
-from src.schemas.llm import SummarizationResponse, ActionItemsResponse, ChatResponse
+from core.config import settings, logger
+from schemas.llm import SummarizationResponse, ActionItemsResponse, ChatResponse
 
 # Initialize Groq LLM
 if not settings.GROQ_API_KEY:
