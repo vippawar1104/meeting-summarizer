@@ -30,11 +30,11 @@ async def check_llm_availability():
     dependencies=[Depends(check_llm_availability)]
 )
 async def summarize_endpoint(request: LLMRequestBase):
-    if not request.text:
+    if not request.transcript:
          raise HTTPException(status_code=400, detail="Transcript text cannot be empty.")
     try:
         logger.info("Received request for summarization")
-        result = await llm_service.generate_summary(request.text)
+        result = await llm_service.generate_summary(request.transcript)
         return result
     except ValueError as ve:
         logger.warning(f"Summarization validation error: {ve}")
@@ -58,11 +58,11 @@ async def summarize_endpoint(request: LLMRequestBase):
     dependencies=[Depends(check_llm_availability)]
 )
 async def extract_action_items_endpoint(request: LLMRequestBase):
-    if not request.text:
+    if not request.transcript:
         raise HTTPException(status_code=400, detail="Transcript text cannot be empty.")
     try:
         logger.info("Received request for action item extraction")
-        result = await llm_service.extract_action_items(request.text)
+        result = await llm_service.extract_action_items(request.transcript)
         return result
     except ValueError as ve:
         logger.warning(f"Action item validation error: {ve}")

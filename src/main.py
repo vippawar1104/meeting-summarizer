@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config import settings, logger
-from api.endpoints import transcription
-from api.endpoints import llm as llm_router
+from src.api.endpoints import transcription
+from src.api.endpoints import llm as llm_router
 
 app = FastAPI(
     title="Multilingual Note-Taking Agent API",
