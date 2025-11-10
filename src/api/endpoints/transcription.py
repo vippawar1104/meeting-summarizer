@@ -1,9 +1,9 @@
 # src/api/endpoints/transcription.py
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 
-from schemas.transcription import TranscriptionResponse
-from services.transcription_service import process_audio_file
-from core.config import logger
+from src.schemas.transcription import TranscriptionResponse
+from src.services.transcription_service import process_audio_file
+from src.core.config import logger
 
 router = APIRouter()
 

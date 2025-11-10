@@ -5,8 +5,8 @@ import uuid
 import shutil
 from fastapi import UploadFile, HTTPException, BackgroundTasks
 
-from core.config import settings, logger
-from schemas.transcription import TranscriptionResponse, Utterance
+from src.core.config import settings, logger
+from src.schemas.transcription import TranscriptionResponse, Utterance
 
 # Configure AssemblyAI SDK
 if settings.ASSEMBLYAI_API_KEY:

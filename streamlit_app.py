@@ -58,15 +58,11 @@ st.markdown("""
         text-align: center;
         color: #8b5cf6;
         font-weight: 800;
-<<<<<<< HEAD
-        animation: float 3s ease-in-out infinite;
-        text-shadow: 0 0 30px rgba(139, 92, 246, 0.6), 
-                     0 0 60px rgba(59, 130, 246, 0.4);
-=======
         position: relative;
         animation: titleFloat 3s ease-in-out infinite;
         z-index: 1;
->>>>>>> 6cefa57747faf429b0a94f6347efd1e68dfce6bb
+        text-shadow: 0 0 30px rgba(139, 92, 246, 0.6), 
+                     0 0 60px rgba(59, 130, 246, 0.4);
     }
     
     h1::before {
@@ -89,14 +85,11 @@ st.markdown("""
         50% { transform: translateY(-10px); }
     }
     
-<<<<<<< HEAD
-=======
     @keyframes titleBlur {
         0%, 100% { filter: blur(12px); opacity: 0.6; }
         50% { filter: blur(16px); opacity: 0.4; }
     }
     
->>>>>>> 6cefa57747faf429b0a94f6347efd1e68dfce6bb
     /* Modern button styling with new gradient */
     .stButton>button {
         border-radius: 12px;

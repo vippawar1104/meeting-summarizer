@@ -1,14 +1,14 @@
 # src/api/endpoints/llm.py
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from schemas.llm import (
+from src.schemas.llm import (
     LLMRequestBase,
     SummarizationResponse,
     ActionItemsResponse,
     ChatRequest, ChatResponse
 )
-from services import llm_service
-from core.config import logger
+from src.services import llm_service
+from src.core.config import logger
 
 router = APIRouter()
 
