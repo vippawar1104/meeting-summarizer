@@ -2,30 +2,25 @@
 import os
 from pydantic_settings import BaseSettings
 import logging
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-dotenv_path = os.path.join(os.path.dirname(__file__), '../../.env')
-load_dotenv(dotenv_path)
 
 class Settings(BaseSettings):
     """Application settings."""
     APP_NAME: str = "Multilingual Note-Taking Agent API"
     API_V1_STR: str = "/api/v1"
-    ASSEMBLYAI_API_KEY: str = os.getenv("ASSEMBLYAI_API_KEY", "")
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL_NAME: str = os.getenv("GROQ_MODEL_NAME", "llama-3.3-70b-versatile")
+    ASSEMBLYAI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
 
     # LangChain specific settings (optional, for text splitting)
-    CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "4000"))
-    CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "200"))
+    CHUNK_SIZE: int = 4000
+    CHUNK_OVERLAP: int = 200
 
     # Temporary directory for uploads (using /tmp in serverless environment)
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "/tmp/audio_uploads")
+    UPLOAD_DIR: str = "/tmp/audio_uploads"
 
     class Config:
         case_sensitive = True
-        env_file = '.env'
+        env_file = os.path.join(os.path.dirname(__file__), '../../.env')
         env_file_encoding = 'utf-8'
 
 settings = Settings()
