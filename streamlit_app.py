@@ -5,6 +5,9 @@ from io import BytesIO
 import os
 
 
+# Set page config to collapse sidebar by default
+st.set_page_config(initial_sidebar_state="collapsed")
+
 # --- Configuration ---
 FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "http://localhost:8001/api/v1")
 TRANSCRIPTION_ENDPOINT = f"{FASTAPI_BASE_URL}/transcribe"
