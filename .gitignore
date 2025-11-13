@@ -31,6 +31,9 @@ ENV/
 *.swp
 *.swo
 
+# macOS
+.DS_Store
+
 # Environment variables
 .env
 
