@@ -8,6 +8,7 @@ langchain-core==0.2.41
 python-dotenv==1.0.0
 httpx==0.25.2
 pydantic>=2.7.0
+pydantic-settings
 streamlit==1.32.0
 python-docx
 pandas
