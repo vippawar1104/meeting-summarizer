@@ -9,7 +9,7 @@ import os
 st.set_page_config(initial_sidebar_state="collapsed")
 
 # --- Configuration ---
-FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "http://localhost:8001/api/v1")
+FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "https://meeting-summarizer-production.up.railway.app/api/v1")
 TRANSCRIPTION_ENDPOINT = f"{FASTAPI_BASE_URL}/transcribe"
 SUMMARIZATION_ENDPOINT = f"{FASTAPI_BASE_URL}/llm/summarize"
 ACTION_ITEMS_ENDPOINT = f"{FASTAPI_BASE_URL}/llm/extract-action-items"
