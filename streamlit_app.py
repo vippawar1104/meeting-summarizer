@@ -315,8 +315,12 @@ def generate_pdf(summary_data: dict, transcript_text: str) -> BytesIO:
     pdf.multi_cell(0, 10, txt=f"Action Items:\n{action_items_text}")
     pdf.ln(5)
     pdf.multi_cell(0, 10, txt=f"Transcript:\n{transcript_text or 'No transcript available.'}")
-    # fpdf output() returns bytes when dest='S'
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    # fpdf.output(dest='S') may return bytes or str depending on the installed version; handle both.
+    output_s = pdf.output(dest='S')
+    if isinstance(output_s, str):
+        pdf_bytes = output_s.encode('latin-1')
+    else:
+        pdf_bytes = output_s
     buffer = BytesIO(pdf_bytes)
     buffer.seek(0)
     return buffer
@@ -583,3 +587,6 @@ else:
 # --- Footer ---
 st.markdown("---")
 st.caption("Copyright 2025 Vipul Pawar")
+
+# --- Streamlit Cloud Rebuild Trigger ---
+# Minor comment added to trigger dependency reinstall
