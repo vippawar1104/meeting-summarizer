@@ -268,7 +268,6 @@ def init_session_state():
 init_session_state()
 
 # --- Helper Functions ---
-from fpdf import FPDF
 import pandas as pd
 from docx import Document
 
@@ -299,29 +298,6 @@ def generate_txt(summary_data: dict, transcript_text: str) -> BytesIO:
     action_items_text = "\n".join([f"- {item}" for item in action_items]) if action_items else "No specific action items identified."
     content = f"""Meeting Notes\n\nSummary:\n{summary}\n\nAction Items:\n{action_items_text}\n\nTranscript:\n{transcript_text or 'No transcript available.'}"""
     buffer.write(content.strip().encode("utf-8"))
-    buffer.seek(0)
-    return buffer
-
-def generate_pdf(summary_data: dict, transcript_text: str) -> BytesIO:
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Meeting Notes", ln=True, align='C')
-    pdf.ln(10)
-    pdf.multi_cell(0, 10, txt=f"Summary:\n{summary_data.get('summary', 'No summary available')}")
-    pdf.ln(5)
-    action_items = summary_data.get("action_items", [])
-    action_items_text = "\n".join([f"- {item}" for item in action_items]) if action_items else "No specific action items identified."
-    pdf.multi_cell(0, 10, txt=f"Action Items:\n{action_items_text}")
-    pdf.ln(5)
-    pdf.multi_cell(0, 10, txt=f"Transcript:\n{transcript_text or 'No transcript available.'}")
-    # fpdf.output(dest='S') may return bytes or str depending on the installed version; handle both.
-    output_s = pdf.output(dest='S')
-    if isinstance(output_s, str):
-        pdf_bytes = output_s.encode('latin-1')
-    else:
-        pdf_bytes = output_s
-    buffer = BytesIO(pdf_bytes)
     buffer.seek(0)
     return buffer
 
@@ -523,15 +499,7 @@ if st.session_state.get("transcribe_clicked"):
             mime="application/txt",
             use_container_width=True
         )
-        # --- Export PDF, CSV, DOCX ---
-        pdf_buffer = generate_pdf(sd, st.session_state.full_transcript_text)
-        st.download_button(
-            label="Export to PDF",
-            data=pdf_buffer,
-            file_name=f"{st.session_state.uploaded_filename.split('.')[0]}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
+        # --- Export CSV, DOCX ---
         csv_buffer = generate_csv(sd, st.session_state.full_transcript_text)
         st.download_button(
             label="Export to CSV",
