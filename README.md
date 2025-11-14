@@ -1,4 +1,4 @@
-# 🎙️ PolyNote - Multilingual Note-Taking Agent
+# PolyNote - Multilingual Note-Taking Agent
 
 [![Python Version](https://img.shields.io/badge/Python-3.10+-blue)](https://python.org)
 [![Frontend](https://img.shields.io/badge/Frontend-Streamlit-red)](https://streamlit.io/)
@@ -9,7 +9,15 @@
 
 A powerful AI-powered application that transcribes, summarizes, and extracts action items from multilingual audio/video content. Built with FastAPI and Streamlit, it provides an intuitive interface for processing and analyzing spoken content.
 
-## 🌟 Features
+## Live Demo
+
+PolyNote is live and fully accessible here:
+
+**https://polynote.streamlit.app/**
+
+Experience real-time transcription, multilingual summarization, action-item extraction, and AI chat directly in your browser—no installation required.
+
+## Features
 
 - **Multilingual Transcription**: Convert audio/video content to text in multiple languages
 - **Smart Summarization**: Generate concise summaries of conversations and meetings
@@ -19,7 +27,7 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 - **File Export**: Export transcripts, summaries, and action items in text format
 - **Real-time Processing**: Fast and efficient processing of audio/video content
 
-## 🎥 Demonstration
+## Demonstration
 
 ### Screenshots
 
@@ -39,34 +47,34 @@ A powerful AI-powered application that transcribes, summarizes, and extracts act
 ![Chat Interface](screenshots/chat_interface.png)
 
 *Interactive chat interface for querying the transcript*
-## 🎬 Demo Video
+## Demo Video
 
-[![Watch the Demo](https://img.shields.io/badge/▶️-Click_to_Watch_Demo-ff0000?style=for-the-badge)](https://drive.google.com/file/d/11KDdiyt3EsEeAbZEJTjpLOoaEp-ysaiw/view)
+[![Watch the Demo](https://img.shields.io/badge/Click_to_Watch_Demo-ff0000?style=for-the-badge)](https://drive.google.com/file/d/11KDdiyt3EsEeAbZEJTjpLOoaEp-ysaiw/view)
 
 > Click the button above to view the demo hosted on Google Drive.
 
-## 🏗️ Architecture
+## Architecture
 
 The application follows a modern microservices architecture:
 
 ```mermaid
 graph TD
-    A([👤 User]) -- Interacts via Browser --> B[🖥️ Streamlit Frontend]
-    B -- 🎧 /transcribe (Audio File) --> C{⚙️ FastAPI Backend}
-    B -- 📝 /summarize (Transcript) --> C
-    B -- 📋 /extract-action-items (Transcript) --> C
-    B -- 💬 /chat (Transcript + Query) --> C
-    C -- ⬆️ Upload Audio / Get Transcript --> D[🧠 AssemblyAI API]
-    C -- 🔁 Summarize / Extract / Chat --> E[🤖 Groq API via LangChain]
-    D -- 📄 Transcription Result --> C
-    E -- 🧠 LLM Response --> C
-    C -- 📦 API Response (JSON) --> B
-    B -- 🔍 Search Keyword --> B
-    B -- 📤 Export TXT --> A
-    B -- 📊 Displays Results --> A
+    A([User]) -- Interacts via Browser --> B[Streamlit Frontend]
+    B -- /transcribe (Audio File) --> C{FastAPI Backend}
+    B -- /summarize (Transcript) --> C
+    B -- /extract-action-items (Transcript) --> C
+    B -- /chat (Transcript + Query) --> C
+    C -- Upload Audio / Get Transcript --> D[AssemblyAI API]
+    C -- Summarize / Extract / Chat --> E[Groq API via LangChain]
+    D -- Transcription Result --> C
+    E -- LLM Response --> C
+    C -- API Response (JSON) --> B
+    B -- Search Keyword --> B
+    B -- Export TXT --> A
+    B -- Displays Results --> A
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ```mermaid
 pie title Tech Stack Distribution
@@ -85,7 +93,7 @@ pie title Tech Stack Distribution
 - **LLM**: Groq - Fast and efficient language model inference
 - **Framework**: LangChain - LLM application development framework
 
-## 🚀 Setup and Installation
+## Setup and Installation
 
 1. **Clone the repository**
    ```bash
@@ -122,7 +130,7 @@ pie title Tech Stack Distribution
    streamlit run streamlit_app.py
    ```
 
-## 📖 Usage
+## Usage
 
 1. **Upload Audio/Video**
    - Click the upload button in the sidebar
@@ -144,7 +152,7 @@ pie title Tech Stack Distribution
 5. **Export**
    - Download the complete notes including transcript, summary, and action items
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Multilingual-Note-Taking-Agent/
@@ -164,7 +172,7 @@ Multilingual-Note-Taking-Agent/
 └── LICENSE                  # MIT License
 ```
 
-## 🔍 Codebase Explanation
+## Codebase Explanation
 
 ### Backend (FastAPI)
 
@@ -188,10 +196,7 @@ Multilingual-Note-Taking-Agent/
   - Summary and action items display
   - Export functionality
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📞 Support
-
-For support, please open an issue in the GitHub repository.
