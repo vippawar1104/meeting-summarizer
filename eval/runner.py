@@ -1,6 +1,7 @@
 import asyncio
 import tempfile
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -13,8 +14,9 @@ from app.cost.guard import GuardedRouter
 from app.db.models import Job
 from app.db.session import make_engine, make_sessionmaker
 from app.github.diff import parse_diff
-from app.llm.base import RouterLike
+from app.llm.base import LLMProvider, RouterLike
 from app.llm.gemini import GeminiProvider
+from app.llm.openai_compat import GroqProvider, MistralProvider
 from app.llm.router import LLMRouter
 from app.pipeline.findings import Finding
 from app.pipeline.merge import normalize_path
@@ -64,11 +66,30 @@ def is_baseline(model: str) -> bool:
     return model.startswith("baseline:")
 
 
+PROVIDERS: dict[str, tuple[str, Callable[..., LLMProvider]]] = {
+    "gemini": ("REVIEWLY_GEMINI_API_KEY", GeminiProvider),
+    "groq": ("REVIEWLY_GROQ_API_KEY", GroqProvider),
+    "mistral": ("REVIEWLY_MISTRAL_API_KEY", MistralProvider),
+}
+
+
+def split_model(spec: str) -> tuple[str, str]:
+    """`groq:openai/gpt-oss-120b` -> ("groq", "openai/gpt-oss-120b"); a bare name means Gemini."""
+    if not is_baseline(spec) and ":" in spec:
+        provider, name = spec.split(":", 1)
+        if provider in PROVIDERS:
+            return provider, name
+    return "gemini", spec
+
+
+def key_env_var(spec: str) -> str | None:
+    return None if is_baseline(spec) else PROVIDERS[split_model(spec)[0]][0]
+
+
 def make_settings(model: str, prompt: str) -> Settings:
     return Settings(
         _env_file=None,
-        gemini_model=model,
-        provider_order="gemini",
+        provider_order=split_model(model)[0],
         prompt_version=prompt,
         review_concurrency=2,
         daily_token_budget=0,
@@ -90,11 +111,13 @@ def build_router(
         return GuardedRouter(RegexRouter())
     inner: LLMRouter | None = None
     if mode != "replay":
+        provider, name = split_model(model)
+        env_var, cls = PROVIDERS[provider]
         if not api_key:
             raise SystemExit(
-                f"REVIEWLY_GEMINI_API_KEY is not set: cannot call {model} live. Use --mode replay to score from recordings."
+                f"{env_var} is not set: cannot call {model} live. Use --mode replay to score from recordings."
             )
-        inner = LLMRouter([GeminiProvider(api_key, model, http)])
+        inner = LLMRouter([cls(api_key, name, http, timeout=120.0)])
     # Redaction runs first (in the guard), so recordings are keyed on exactly what a provider would see.
     return GuardedRouter(RecordingRouter(inner, store, model, mode, rpm=rpm))
 

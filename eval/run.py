@@ -21,7 +21,7 @@ from app.core.logging import configure_logging
 from eval.cases import load_cases
 from eval.metrics import summarize
 from eval.report import print_table
-from eval.runner import run_all
+from eval.runner import key_env_var, run_all
 
 ROOT = Path(__file__).parent
 
@@ -30,13 +30,15 @@ def slug(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", text)
 
 
-def load_env_key() -> str | None:
-    if key := os.environ.get("REVIEWLY_GEMINI_API_KEY"):
+def load_env_key(name: str | None) -> str | None:
+    if not name:
+        return None
+    if key := os.environ.get(name):
         return key
     env = Path(".env")
     if env.is_file():
         for line in env.read_text().splitlines():
-            if line.startswith("REVIEWLY_GEMINI_API_KEY="):
+            if line.startswith(f"{name}="):
                 return line.split("=", 1)[1].strip().strip('"') or None
     return None
 
@@ -46,7 +48,14 @@ async def run_combo(model: str, prompt: str, args: argparse.Namespace) -> Path:
     recordings = ROOT / "recordings" / f"{slug(model)}__{prompt}.jsonl"
     started = time.time()
     results = await run_all(
-        cases, model, prompt, args.mode, args.concurrency, recordings, load_env_key(), args.rpm
+        cases,
+        model,
+        prompt,
+        args.mode,
+        args.concurrency,
+        recordings,
+        load_env_key(key_env_var(model)),
+        args.rpm,
     )
     summary = summarize(results)
     out = ROOT / "results" / f"{slug(model)}__{prompt}.json"
@@ -84,7 +93,7 @@ def main() -> None:
         "--model",
         action="append",
         required=True,
-        help="gemini-* or baseline:null / baseline:regex; repeatable",
+        help="[gemini-*|groq:<model>|mistral:<model>|baseline:null|baseline:regex]; repeatable",
     )
     ap.add_argument("--prompt", action="append", help="prompt version (default v1); repeatable")
     ap.add_argument("--mode", choices=["auto", "live", "replay"], default="auto")
@@ -92,7 +101,7 @@ def main() -> None:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument(
-        "--rpm", type=float, help="cap provider requests per minute (free Gemini tier: 4)"
+        "--rpm", type=float, help="cap provider requests per minute (free tiers are low)"
     )
     args = ap.parse_args()
     configure_logging("WARNING")  # the pipeline logs every review; the table is what matters here

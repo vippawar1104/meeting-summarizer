@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     mistral_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     mistral_model: str = "mistral-large-latest"
     llm_timeout_s: float = 60.0
     breaker_threshold: int = 3
