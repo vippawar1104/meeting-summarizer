@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: reviewly
+      POSTGRES_PASSWORD: reviewly
+      POSTGRES_DB: reviewly
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reviewly"]
+      interval: 2s
+      retries: 30
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+  migrate:
+    build: .
+    command: alembic upgrade head
+    environment: &env
+      REVIEWLY_DATABASE_URL: postgresql+psycopg://reviewly:reviewly@postgres:5432/reviewly
+      REVIEWLY_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    build: .
+    environment: *env
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+  worker:
+    build: .
+    command: python -m worker.main
+    environment: *env
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}

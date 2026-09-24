@@ -1,0 +1,5 @@
+.venv
+.git
+.env*
+node_modules
+__pycache__
