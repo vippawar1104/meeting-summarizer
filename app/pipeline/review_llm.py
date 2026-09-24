@@ -20,6 +20,7 @@ class GroupResult:
     parse_failed: bool = False
     dropped_invalid: int = 0
     model: str = ""
+    context_chunks: int = 0
 
 
 async def review_group(router: LLMRouter, system: str, user: str) -> GroupResult:

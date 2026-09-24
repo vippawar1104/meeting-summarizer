@@ -43,6 +43,22 @@ class Settings(BaseSettings):
     breaker_threshold: int = 3
     breaker_cooldown_s: float = 30.0
 
+    # Repo context (RAG). Off by default until the eval harness shows it improves precision.
+    rag_enabled: bool = False
+    embedding_model: str = "gemini-embedding-001"
+    embedding_dim: int = 768
+    embed_batch_size: int = 64
+    chunk_max_chars: int = 2000
+    max_index_files: int = 2000
+    max_file_bytes: int = 200_000
+    index_concurrency: int = 8
+    retention_days: int = 30  # indexed code not seen for this long is deleted
+    retrieval_k: int = 20  # candidates per retriever before fusion
+    rrf_k: int = 60
+    context_chunks: int = 4
+    context_chars: int = 6000
+    rerank_enabled: bool = True
+
     # Review pipeline
     prompt_version: str = "v1"
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text

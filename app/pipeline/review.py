@@ -24,6 +24,8 @@ from app.pipeline.post import (
 from app.pipeline.prompts import load_system_prompt, render_user_prompt
 from app.pipeline.review_llm import GroupResult, review_group
 from app.queue.errors import PermanentError, SkipJob
+from app.rag.feedback import FeedbackContext, past_feedback
+from app.rag.retrieval import Retriever
 
 log = structlog.get_logger()
 
@@ -39,6 +41,7 @@ class ReviewOutcome:
     groups_failed: int = 0
     parse_failures: int = 0
     repairs: int = 0
+    context_chunks: int = 0
     partial: bool = False
     merge: MergeStats = field(default_factory=MergeStats)
 
@@ -52,8 +55,14 @@ class ReviewPipeline:
         router: LLMRouter,
         settings: Settings,
         sessionmaker: async_sessionmaker[AsyncSession],
+        retriever: Retriever | None = None,
     ) -> None:
         self._gh, self._router, self._s, self._sm = github, router, settings, sessionmaker
+        self._retriever = retriever
+        if retriever is not None and settings.prompt_version == "v1":
+            raise ValueError(
+                "repository context needs prompt v2 or later (v1 does not describe it)"
+            )
         self._system = load_system_prompt(settings.prompt_version)
 
     async def run(self, job: Job) -> ReviewOutcome:
@@ -75,7 +84,8 @@ class ReviewPipeline:
             raise PermanentError(f"not found on GitHub: {exc}") from exc
         config, config_warning = parse_repo_config(raw_cfg)
 
-        kept = filter_files(parse_diff(diff_text), config.ignore).kept
+        parsed = parse_diff(diff_text)
+        kept = filter_files(parsed, config.ignore).kept
         if not kept:
             raise SkipJob("no reviewable files")
         valid_lines = {f.path: f.commentable_lines for f in kept}
@@ -83,7 +93,11 @@ class ReviewPipeline:
         chosen, dropped = select_within_budget(groups, self._s.max_review_chars)
 
         out = ReviewOutcome(groups_total=len(chosen), partial=bool(dropped))
-        results = await self._review_all(chosen, pr.get("title") or "", config)
+        changed_paths = {f.path for f in parsed} | {f.old_path for f in parsed if f.old_path}
+        feedback = await self._feedback(job, changed_paths) if self._retriever else None
+        results = await self._review_all(
+            chosen, pr.get("title") or "", config, job, changed_paths, feedback
+        )
         findings = self._collect(results, out)
 
         max_comments = config.max_comments or self._s.max_comments
@@ -129,15 +143,45 @@ class ReviewPipeline:
         )
         return out
 
+    async def _feedback(self, job: Job, paths: set[str]) -> FeedbackContext | None:
+        try:
+            return await past_feedback(self._sm, job.installation_id, job.repo_full_name, paths)
+        except Exception:
+            log.exception("feedback_lookup_failed", job_id=job.id)
+            return None
+
     async def _review_all(
-        self, groups: list[HunkGroup], title: str, config: RepoConfig
+        self,
+        groups: list[HunkGroup],
+        title: str,
+        config: RepoConfig,
+        job: Job,
+        changed_paths: set[str],
+        feedback: FeedbackContext | None,
     ) -> list[GroupResult | BaseException]:
         sem = asyncio.Semaphore(self._s.review_concurrency)
 
         async def one(g: HunkGroup) -> GroupResult:
             async with sem:
-                user = render_user_prompt(g, pr_title=title, rules=config.rules)
-                return await review_group(self._router, self._system, user)
+                context, extra = [], None
+                if self._retriever is not None:
+                    try:  # missing context must never fail a review
+                        extra = await self._retriever.retrieve(
+                            job.installation_id, job.repo_full_name, g, changed_paths
+                        )
+                        context = extra.chunks
+                    except Exception:
+                        log.exception("retrieval_failed", job_id=job.id, path=g.path)
+                user = render_user_prompt(
+                    g, pr_title=title, rules=config.rules, context=context, feedback=feedback
+                )
+                result = await review_group(self._router, self._system, user)
+                if extra is not None:
+                    result.prompt_tokens += extra.prompt_tokens
+                    result.completion_tokens += extra.completion_tokens
+                    result.cost_usd += extra.cost_usd
+                    result.context_chunks = len(context)
+                return result
 
         return list(await asyncio.gather(*(one(g) for g in groups), return_exceptions=True))
 
@@ -157,6 +201,7 @@ class ReviewPipeline:
             out.completion_tokens += r.completion_tokens
             out.cost_usd += r.cost_usd
             out.repairs += r.repaired
+            out.context_chunks += r.context_chunks
             out.parse_failures += r.parse_failed
         if errors and out.groups_failed == out.groups_total:
             # Every call failed (provider outage): raise so the job is retried, not "reviewed".

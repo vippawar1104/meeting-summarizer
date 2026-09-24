@@ -25,6 +25,7 @@ class Job(SQLModel, table=True):
     __tablename__ = "jobs"
 
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+    kind: str = Field(default="review")  # review | index | purge
     # installation + repo + PR + head SHA: a redelivery can never create a second review.
     idempotency_key: str = Field(unique=True, index=True)
     installation_id: int = Field(index=True)
@@ -76,4 +77,6 @@ class FindingRow(SQLModel, table=True):
     suggested_patch: str | None = None
     confidence: float
     fingerprint: str = Field(index=True)  # stable id for "the same finding", used to suppress FPs
+    feedback: str | None = None  # accepted | dismissed, set by the feedback loop
+    feedback_at: datetime | None = None
     created_at: datetime = Field(default_factory=_now)

@@ -15,6 +15,13 @@ from app.github.client import GitHubClient
 from app.llm.factory import build_router
 from app.pipeline.review import ReviewPipeline
 from app.queue.redis_queue import RedisJobQueue
+from app.rag.embeddings import build_embedder
+from app.rag.indexer import RepoIndexer, purge_expired
+from app.rag.pg_store import PgChunkStore
+from app.rag.rerank import LLMReranker, NoopReranker
+from app.rag.retrieval import Retriever
+from worker.dispatch import dispatch
+from worker.handlers import make_index_handler, make_purge_handler
 from worker.reconciler import reconcile
 from worker.runner import Handler, Worker
 
@@ -31,12 +38,16 @@ def build_handler(
     sm: async_sessionmaker[AsyncSession],
     redis: Redis,
     http: httpx.AsyncClient,
+    store: PgChunkStore,
 ) -> Handler:
+    handlers: dict[str, Handler] = {
+        "review": review_stub,
+        "index": review_stub,
+        "purge": make_purge_handler(store),
+    }
     if not (settings.github_app_id and settings.github_private_key):
-        return review_stub
-    router = build_router(settings, http)
-    if not router.providers:
-        return review_stub
+        return dispatch(handlers)
+
     auth = GitHubAppAuth(
         settings.github_app_id,
         settings.github_private_key,
@@ -45,12 +56,36 @@ def build_handler(
         api_url=settings.github_api_url,
     )
     github = GitHubClient(auth, http, api_url=settings.github_api_url)
-    pipeline = ReviewPipeline(github, router, settings, sm)
+    embedder = build_embedder(settings, http)
+    indexer = RepoIndexer(github, embedder, store, settings)
 
-    async def handler(job: Job) -> None:
-        await pipeline.run(job)
+    handlers["index"] = make_index_handler(indexer)
 
-    return handler
+    router = build_router(settings, http)
+    if router.providers:
+        retriever = None
+        if settings.rag_enabled:
+            reranker = LLMReranker(router) if settings.rerank_enabled else NoopReranker()
+            retriever = Retriever(embedder, store, reranker, settings)
+        pipeline = ReviewPipeline(github, router, settings, sm, retriever)
+
+        async def review(job: Job) -> None:
+            await pipeline.run(job)
+
+        handlers["review"] = review
+    return dispatch(handlers)
+
+
+async def retention_loop(stop: asyncio.Event, store: PgChunkStore, settings: Settings) -> None:
+    while not stop.is_set():
+        try:
+            await purge_expired(store, settings.retention_days)
+        except Exception:
+            log.exception("retention_purge_failed")
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=6 * 3600)
+        except TimeoutError:
+            pass
 
 
 async def reconcile_loop(
@@ -78,7 +113,8 @@ async def run() -> None:
     redis = Redis.from_url(settings.redis_url)
     queue = RedisJobQueue(redis, prefix=settings.queue_prefix)
     http = httpx.AsyncClient()
-    handler = build_handler(settings, sm, redis, http)
+    store = PgChunkStore(sm)
+    handler = build_handler(settings, sm, redis, http, store)
     worker = Worker(sessionmaker=sm, queue=queue, handler=handler, settings=settings)
 
     stop = asyncio.Event()
@@ -88,12 +124,14 @@ async def run() -> None:
 
     loop_task = asyncio.create_task(worker.run())
     rec_task = asyncio.create_task(reconcile_loop(stop, sm, queue, settings))
+    ret_task = asyncio.create_task(retention_loop(stop, store, settings))
     log.info("worker_started", concurrency=settings.worker_concurrency)
     await stop.wait()
     log.info("worker_stopping")
     await worker.shutdown(settings.shutdown_grace_s)
     await loop_task
     await rec_task
+    await ret_task
     await http.aclose()
     await redis.aclose()
     await engine.dispose()

@@ -27,13 +27,9 @@ class FilterResult:
     skipped: dict[str, str] = field(default_factory=dict)  # path -> reason
 
 
-def skip_reason(f: FileDiff, ignore_globs: list[str]) -> str | None:
-    path = f.path
+def path_skip_reason(path: str, ignore_globs: list[str]) -> str | None:
+    """Path-only exclusions, shared by the diff filter and the repo indexer."""
     name = path.rsplit("/", 1)[-1]
-    if f.status == "deleted":
-        return "deleted file"
-    if f.binary:
-        return "binary file"
     if name in LOCKFILES:
         return "lock file"
     if any(path.startswith(d) or f"/{d}" in f"/{path}" for d in VENDORED_DIRS):
@@ -44,6 +40,17 @@ def skip_reason(f: FileDiff, ignore_globs: list[str]) -> str | None:
         return "binary file"
     if any(fnmatch.fnmatch(path, g) or fnmatch.fnmatch(name, g) for g in ignore_globs):
         return "ignored by .reviewly.yml"
+    return None
+
+
+def skip_reason(f: FileDiff, ignore_globs: list[str]) -> str | None:
+    if f.status == "deleted":
+        return "deleted file"
+    if f.binary:
+        return "binary file"
+    reason = path_skip_reason(f.path, ignore_globs)
+    if reason:
+        return reason
     head = [ln.content for h in f.hunks for ln in h.lines if ln.kind == "add"][:5]
     if any(GENERATED_MARKERS.search(ln) for ln in head):
         return "generated file"

@@ -3,6 +3,18 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: reviewly
+          POSTGRES_PASSWORD: reviewly
+          POSTGRES_DB: reviewly_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U reviewly" --health-interval 5s --health-retries 10
+    env:
+      REVIEWLY_TEST_PG_URL: postgresql+psycopg://reviewly:reviewly@localhost:5432/reviewly_test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3

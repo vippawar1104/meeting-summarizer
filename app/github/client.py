@@ -1,3 +1,4 @@
+import base64
 from typing import Any
 
 import httpx
@@ -91,6 +92,32 @@ class GitHubClient:
         resp = await self._request(inst, "GET", f"/repos/{repo}/pulls/{number}")
         data: dict[str, Any] = resp.json()
         return data
+
+    async def get_repo(self, inst: int, repo: str) -> dict[str, Any]:
+        data: dict[str, Any] = (await self._request(inst, "GET", f"/repos/{repo}")).json()
+        return data
+
+    async def get_branch_head(self, inst: int, repo: str, branch: str) -> str:
+        resp = await self._request(inst, "GET", f"/repos/{repo}/commits/{branch}")
+        return str(resp.json()["sha"])
+
+    async def get_tree(self, inst: int, repo: str, sha: str) -> tuple[list[dict[str, Any]], bool]:
+        """The whole repo tree at a commit. `truncated` is True when GitHub cut it short."""
+        resp = await self._request(
+            inst, "GET", f"/repos/{repo}/git/trees/{sha}", params={"recursive": 1}
+        )
+        data = resp.json()
+        return list(data.get("tree", [])), bool(data.get("truncated", False))
+
+    async def get_blob(self, inst: int, repo: str, blob_sha: str) -> bytes | None:
+        try:
+            resp = await self._request(inst, "GET", f"/repos/{repo}/git/blobs/{blob_sha}")
+        except GitHubNotFound:
+            return None
+        data = resp.json()
+        if data.get("encoding") != "base64":
+            return str(data.get("content", "")).encode()
+        return base64.b64decode(data["content"])
 
     async def get_diff(self, inst: int, repo: str, number: int) -> str:
         try:

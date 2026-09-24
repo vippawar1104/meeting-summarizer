@@ -107,3 +107,32 @@ async def wenv(tmp_path: Any, clock: Any) -> AsyncIterator[dict[str, Any]]:
         "clock": clock,
     }
     await engine.dispose()
+
+
+# ---- chunk stores: every contract test runs on the in-memory store and on real Postgres -------
+
+import os  # noqa: E402
+
+PG_URL = os.environ.get("REVIEWLY_TEST_PG_URL")
+
+
+@pytest.fixture(params=["memory", "pg"])
+async def store(request: Any) -> AsyncIterator[Any]:
+    from app.rag.store import MemoryChunkStore
+
+    if request.param == "memory":
+        yield MemoryChunkStore()
+        return
+    if not PG_URL:
+        pytest.skip("set REVIEWLY_TEST_PG_URL to run the Postgres/pgvector tests")
+    from sqlalchemy import text
+
+    from app.rag.pg_store import PgChunkStore, rag_metadata
+
+    engine = make_engine(PG_URL)
+    async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.run_sync(rag_metadata.drop_all)
+        await conn.run_sync(rag_metadata.create_all)
+    yield PgChunkStore(make_sessionmaker(engine))
+    await engine.dispose()
