@@ -5,6 +5,18 @@ import httpx
 from app.llm.base import BadRequest, ProviderUnavailable, RateLimited
 
 
+def _retry_delay_from_body(resp: httpx.Response) -> float | None:
+    """Gemini puts a RetryInfo entry like {"retryDelay": "48s"} in the error details."""
+    try:
+        for detail in resp.json().get("error", {}).get("details", []):
+            delay = detail.get("retryDelay")
+            if isinstance(delay, str) and delay.endswith("s"):
+                return float(delay[:-1])
+    except (ValueError, AttributeError, TypeError):
+        pass
+    return None
+
+
 def raise_for_status(resp: httpx.Response, provider: str) -> None:
     code = resp.status_code
     if code < 400:
@@ -14,7 +26,7 @@ def raise_for_status(resp: httpx.Response, provider: str) -> None:
         try:
             retry_after: float | None = float(resp.headers.get("retry-after", ""))
         except ValueError:
-            retry_after = None
+            retry_after = _retry_delay_from_body(resp)
         raise RateLimited(detail, retry_after)
     if code in (401, 403, 408) or code >= 500:
         # 401/403 = bad or revoked key: unusable until fixed, so treat like an outage.

@@ -77,7 +77,12 @@ def make_settings(model: str, prompt: str) -> Settings:
 
 
 def build_router(
-    model: str, store: RecordingStore, mode: str, api_key: str | None, http: httpx.AsyncClient
+    model: str,
+    store: RecordingStore,
+    mode: str,
+    api_key: str | None,
+    http: httpx.AsyncClient,
+    rpm: float | None = None,
 ) -> RouterLike:
     if model == "baseline:null":
         return GuardedRouter(NullRouter())
@@ -91,7 +96,7 @@ def build_router(
             )
         inner = LLMRouter([GeminiProvider(api_key, model, http)])
     # Redaction runs first (in the guard), so recordings are keyed on exactly what a provider would see.
-    return GuardedRouter(RecordingRouter(inner, store, model, mode))
+    return GuardedRouter(RecordingRouter(inner, store, model, mode, rpm=rpm))
 
 
 def views(findings: list[Finding], commentable: dict[str, set[int]]) -> list[FindingView]:
@@ -160,6 +165,7 @@ async def run_all(
     concurrency: int,
     recordings: Path,
     api_key: str | None,
+    rpm: float | None = None,
 ) -> list[CaseResult]:
     settings = make_settings(model, prompt)
     store = RecordingStore(recordings)
@@ -170,7 +176,7 @@ async def run_all(
     sm = make_sessionmaker(engine)
     sem = asyncio.Semaphore(concurrency)
     async with httpx.AsyncClient(timeout=120) as http:
-        router = build_router(model, store, mode, api_key, http)
+        router = build_router(model, store, mode, api_key, http, rpm)
 
         async def one(case: Case) -> CaseResult:
             async with sem:

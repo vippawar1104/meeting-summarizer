@@ -71,15 +71,31 @@ class RecordingRouter:
         model: str,
         mode: str = "auto",
         *,
-        retries: int = 6,
+        retries: int = 10,
+        rpm: float | None = None,
     ) -> None:
         assert mode in ("auto", "live", "replay")
         self._inner, self._store, self._model, self._mode = inner, store, model, mode
         self._retries = retries
+        self._interval = (
+            60.0 / rpm if rpm else 0.0
+        )  # spacing that keeps us under a requests/minute cap
+        self._pace_lock = asyncio.Lock()
+        self._next_slot = 0.0
         self.providers: list[object] = [object()]  # non-empty: this router is "configured"
 
     def status(self) -> dict[str, str]:
         return {}
+
+    async def _pace(self) -> None:
+        if not self._interval:
+            return
+        async with self._pace_lock:
+            loop = asyncio.get_running_loop()
+            wait = self._next_slot - loop.time()
+            if wait > 0:
+                await asyncio.sleep(wait)
+            self._next_slot = loop.time() + self._interval
 
     async def complete(self, messages: list[Message], *, json_mode: bool = True) -> LLMResult:
         key = request_key(self._model, messages, json_mode)
@@ -92,13 +108,15 @@ class RecordingRouter:
             raise MissingRecording(f"no recorded reply for {self._model} (mode={self._mode})")
         start = asyncio.get_running_loop().time()
         for attempt in range(self._retries + 1):
+            await self._pace()
             try:
                 res = await self._inner.complete(messages, json_mode=json_mode)
                 break
-            except RetryableLLMError:
+            except RetryableLLMError as exc:
                 if attempt == self._retries:
                     raise
-                await asyncio.sleep(min(60.0, 2.0 * 2**attempt))
+                hinted = getattr(exc, "retry_after_s", None)  # the provider says how long to wait
+                await asyncio.sleep(hinted + 1.0 if hinted else min(60.0, 2.0 * 2**attempt))
         elapsed = asyncio.get_running_loop().time() - start
         self._store.add_reply(
             key,

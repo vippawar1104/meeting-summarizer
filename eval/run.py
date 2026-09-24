@@ -46,7 +46,7 @@ async def run_combo(model: str, prompt: str, args: argparse.Namespace) -> Path:
     recordings = ROOT / "recordings" / f"{slug(model)}__{prompt}.jsonl"
     started = time.time()
     results = await run_all(
-        cases, model, prompt, args.mode, args.concurrency, recordings, load_env_key()
+        cases, model, prompt, args.mode, args.concurrency, recordings, load_env_key(), args.rpm
     )
     summary = summarize(results)
     out = ROOT / "results" / f"{slug(model)}__{prompt}.json"
@@ -91,6 +91,9 @@ def main() -> None:
     ap.add_argument("--kinds", nargs="*", choices=["bug", "clean", "adversarial"])
     ap.add_argument("--limit", type=int)
     ap.add_argument("--concurrency", type=int, default=3)
+    ap.add_argument(
+        "--rpm", type=float, help="cap provider requests per minute (free Gemini tier: 4)"
+    )
     args = ap.parse_args()
     configure_logging("WARNING")  # the pipeline logs every review; the table is what matters here
     outputs = [
