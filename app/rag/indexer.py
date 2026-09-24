@@ -13,6 +13,7 @@ from app.queue.errors import PermanentError
 from app.rag.chunker import chunk_file, language_for
 from app.rag.embeddings import Embedder
 from app.rag.store import ChunkStore
+from app.safety.redact import redact_text
 
 log = structlog.get_logger()
 
@@ -137,6 +138,8 @@ class RepoIndexer:
         if text is None:
             report.skip("binary or unreadable")
             return
+        if self._s.redaction_enabled:
+            text, _ = redact_text(text)  # line-preserving: chunk line numbers stay exact
         chunks = chunk_file(path, text, self._s.chunk_max_chars)
         texts = [embedding_text(c.path, c.kind, c.name, c.content) for c in chunks]
         embeddings = await self._embedder.embed(texts, task="document") if texts else []

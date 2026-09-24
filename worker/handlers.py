@@ -1,3 +1,4 @@
+from app.cost.cache import ReviewCache
 from app.db.models import Job
 from app.rag.indexer import RepoIndexer
 from app.rag.store import ChunkStore
@@ -13,10 +14,12 @@ def make_index_handler(indexer: RepoIndexer) -> Handler:
     return handler
 
 
-def make_purge_handler(store: ChunkStore) -> Handler:
+def make_purge_handler(store: ChunkStore, cache: ReviewCache | None = None) -> Handler:
     async def handler(job: Job) -> None:
         if job.repo_full_name == "*":
             await store.delete_installation(job.installation_id)
+            if cache is not None:  # cached replies are derived from the customer's code
+                await cache.clear_installation(job.installation_id)
         else:
             await store.delete_repo(job.installation_id, job.repo_full_name)
 

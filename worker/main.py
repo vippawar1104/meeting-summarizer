@@ -8,6 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
+from app.cost.budget import TokenBudget
+from app.cost.cache import ReviewCache
+from app.cost.guard import GuardedRouter
+from app.cost.ratelimit import RateLimiter
 from app.db.models import Job
 from app.db.session import make_engine, make_sessionmaker
 from app.github.auth import GitHubAppAuth
@@ -40,10 +44,11 @@ def build_handler(
     http: httpx.AsyncClient,
     store: PgChunkStore,
 ) -> Handler:
+    cache = ReviewCache(redis, settings.cache_ttl_days) if settings.cache_enabled else None
     handlers: dict[str, Handler] = {
         "review": review_stub,
         "index": review_stub,
-        "purge": make_purge_handler(store),
+        "purge": make_purge_handler(store, cache),
     }
     if not (settings.github_app_id and settings.github_private_key):
         return dispatch(handlers)
@@ -61,13 +66,22 @@ def build_handler(
 
     handlers["index"] = make_index_handler(indexer)
 
-    router = build_router(settings, http)
+    # Every LLM call (review, repair, rerank) goes through the guard: redaction, rate limit, budget.
+    router = GuardedRouter(
+        build_router(settings, http),
+        budget=TokenBudget(redis, settings.daily_token_budget),
+        limiter=RateLimiter(
+            redis, per_minute=settings.llm_rate_per_min, burst=settings.llm_rate_burst
+        ),
+        redact=settings.redaction_enabled,
+        max_wait_s=settings.llm_rate_max_wait_s,
+    )
     if router.providers:
         retriever = None
         if settings.rag_enabled:
             reranker = LLMReranker(router) if settings.rerank_enabled else NoopReranker()
             retriever = Retriever(embedder, store, reranker, settings)
-        pipeline = ReviewPipeline(github, router, settings, sm, retriever)
+        pipeline = ReviewPipeline(github, router, settings, sm, retriever, cache)
 
         async def review(job: Job) -> None:
             await pipeline.run(job)

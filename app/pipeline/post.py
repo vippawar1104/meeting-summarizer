@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.pipeline.findings import SEVERITY_WEIGHT, Finding
+from app.safety.output import fence_for, sanitize_message
 
 SEVERITY_LABEL = {
     "critical": "🔴 Critical",
@@ -27,13 +28,15 @@ def fingerprint(f: Finding) -> str:
 
 
 def format_comment(f: Finding) -> str:
-    parts = [f"**{SEVERITY_LABEL[f.severity]} · {f.category}**", "", f.message.strip()]
+    parts = [f"**{SEVERITY_LABEL[f.severity]} · {f.category}**", "", sanitize_message(f.message)]
     patch = (f.suggested_patch or "").rstrip("\n")
-    if patch:
+    # A patch written against redacted text would put "[REDACTED:...]" into the user's code.
+    if patch and "[REDACTED:" not in patch:
         # A ```suggestion block replaces exactly the commented line, so only single-line patches
         # may use it; anything longer is shown as plain code instead of risking a wrong edit.
-        fence = "suggestion" if "\n" not in patch else ""
-        parts += ["", f"```{fence}", patch, "```"]
+        fence = fence_for(patch)
+        info = "suggestion" if "\n" not in patch and fence == "```" else ""
+        parts += ["", f"{fence}{info}", patch, fence]
     parts += ["", f"<sub>Reviewly · confidence {round(f.confidence * 100)}%</sub>"]
     parts.append(f"<!-- reviewly:finding:{fingerprint(f)} -->")
     return "\n".join(parts)
@@ -47,6 +50,10 @@ class SummaryInfo:
     skipped_for_size: list[str] = field(default_factory=list)
     not_shown: int = 0
     config_warning: str | None = None
+    redactions: int = 0
+    hidden_chars: int = 0
+    budget_skipped: int = 0
+    title_flagged: bool = False
     model: str = ""
     prompt_version: str = ""
 
@@ -81,6 +88,21 @@ def build_summary(findings: list[Finding], info: SummaryInfo, head_sha: str) -> 
         lines.append(
             f"\n⚠️ {info.groups_failed} of {info.groups_total} section(s) could not be reviewed "
             "because the AI provider was unavailable."
+        )
+    if info.budget_skipped:
+        lines.append(
+            f"\n⚠️ {info.budget_skipped} of {info.groups_total} section(s) were not reviewed: "
+            "this installation's daily AI budget was reached."
+        )
+    if info.redactions:
+        lines.append(f"\n🔒 {info.redactions} potential secret(s) were redacted before analysis.")
+    if info.hidden_chars:
+        lines.append(
+            f"\n🔒 {info.hidden_chars} invisible character(s) were removed before analysis."
+        )
+    if info.title_flagged:
+        lines.append(
+            "\n⚠️ The pull request title contains text aimed at an AI reviewer; it was ignored."
         )
     if info.config_warning:
         lines.append(f"\nℹ️ {info.config_warning}")

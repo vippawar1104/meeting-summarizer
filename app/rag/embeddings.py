@@ -9,6 +9,7 @@ import structlog
 from app.core.config import Settings
 from app.llm.http import post_json
 from app.rag.text import code_tokens
+from app.safety.redact import redact_text
 
 log = structlog.get_logger()
 
@@ -103,9 +104,20 @@ class GeminiEmbedder:
         return out
 
 
+class RedactingEmbedder:
+    """Guarantees no secret is sent to the embedding provider, whoever the caller is."""
+
+    def __init__(self, inner: Embedder) -> None:
+        self._inner = inner
+        self.model, self.dimension = inner.model, inner.dimension
+
+    async def embed(self, texts: list[str], *, task: Task = "document") -> list[list[float]]:
+        return await self._inner.embed([redact_text(t)[0] for t in texts], task=task)
+
+
 def build_embedder(settings: Settings, http: httpx.AsyncClient) -> Embedder:
     if settings.gemini_api_key:
-        return GeminiEmbedder(
+        gemini = GeminiEmbedder(
             settings.gemini_api_key,
             settings.embedding_model,
             settings.embedding_dim,
@@ -113,5 +125,6 @@ def build_embedder(settings: Settings, http: httpx.AsyncClient) -> Embedder:
             batch_size=settings.embed_batch_size,
             timeout_s=settings.llm_timeout_s,
         )
+        return RedactingEmbedder(gemini) if settings.redaction_enabled else gemini
     log.warning("no_embedding_provider", fallback="hashing-v1")
     return HashingEmbedder(settings.embedding_dim)

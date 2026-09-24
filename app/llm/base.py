@@ -46,6 +46,10 @@ class AllProvidersFailed(LLMError):
         self.errors = errors
 
 
+class Completer(Protocol):
+    async def complete(self, messages: list[Message], *, json_mode: bool = True) -> LLMResult: ...
+
+
 class LLMProvider(Protocol):
     name: str
     model: str

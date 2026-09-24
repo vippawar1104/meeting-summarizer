@@ -6,7 +6,7 @@ import pytest
 
 from app.core.config import Settings
 from app.llm.base import ProviderUnavailable, RateLimited
-from app.rag.embeddings import GeminiEmbedder, HashingEmbedder, build_embedder
+from app.rag.embeddings import GeminiEmbedder, HashingEmbedder, RedactingEmbedder, build_embedder
 from app.rag.text import code_tokens, query_terms, search_text, subtokens
 
 
@@ -162,6 +162,9 @@ async def test_gemini_embedder_maps_rate_limits():
 
 def test_build_embedder_picks_gemini_when_keyed_and_hashing_otherwise():
     http = httpx.AsyncClient()
-    assert isinstance(build_embedder(Settings(gemini_api_key="k"), http), GeminiEmbedder)
+    guarded = build_embedder(Settings(gemini_api_key="k"), http)
+    assert isinstance(guarded, RedactingEmbedder) and isinstance(guarded._inner, GeminiEmbedder)
+    bare = build_embedder(Settings(gemini_api_key="k", redaction_enabled=False), http)
+    assert isinstance(bare, GeminiEmbedder)
     fallback = build_embedder(Settings(gemini_api_key=None), http)
     assert isinstance(fallback, HashingEmbedder) and fallback.dimension == 768

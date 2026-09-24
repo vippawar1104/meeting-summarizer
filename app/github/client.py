@@ -177,6 +177,11 @@ class GitHubClient:
                 break
         return reviews
 
+    async def create_comment(self, inst: int, repo: str, number: int, body: str) -> None:
+        await self._request(
+            inst, "POST", f"/repos/{repo}/issues/{number}/comments", json={"body": body}
+        )
+
     async def create_review(
         self, inst: int, repo: str, number: int, payload: dict[str, Any]
     ) -> dict[str, Any]:
