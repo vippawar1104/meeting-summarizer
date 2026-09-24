@@ -29,10 +29,12 @@ async def overview(
     this_month = next((u for u in series if u.period == period_of(now)), None)
 
     async with sm() as s:
+        # A skipped job (closed PR, superseded commit, free-tier limit...) is not a review.
         done = (
             (col(Job.installation_id) == installation_id)
             & (col(Job.kind) == "review")
             & (col(Job.status) == JobStatus.DONE)
+            & (col(Job.last_error).is_(None) | ~col(Job.last_error).like("skipped%"))
         )
         totals = (
             await s.execute(

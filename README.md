@@ -18,7 +18,7 @@ make up        # docker compose: postgres+pgvector, redis, migrate, api, worker
 - [x] M4 repo index (tree-sitter chunks, pgvector + full-text), hybrid retrieval with RRF, LLM reranker, maintainer-feedback context. Off by default (`REVIEWLY_RAG_ENABLED`): its effect on review quality is not measured yet, that is M6
 - [x] M5 secret redaction, injection hardening, per-installation token budget and rate limit, review cache, partial-review handling
 - [x] M6 evaluation harness: 58 labeled cases, metrics with confidence intervals, record/replay, CI gate. Gemini numbers pending (needs an API key)
-- [ ] M7 dashboard, feedback, billing
+- [x] M7 dashboard (React + TypeScript, black on white with dark mode), feedback loop, usage metering, free tier, Stripe test-mode checkout
 - [ ] M8 observability, load test, deploy
 
 ## Repo context (M4) design notes
@@ -88,3 +88,34 @@ failed after retries and its row covers only the cases that scored).
 - Latency includes waiting out Groq's per-minute rate limits while several runs shared the budget, so treat it as an upper bound.
 - Cost columns are n/a: no verified price for these models.
 - Remaining false alarms are mostly confident speculation (0.93 to 0.95). The next improvement to try is a second verification pass that re-checks each finding against the visible diff.
+
+## Dashboard, feedback and billing (M7)
+**Run it locally with demo data**
+```
+make up                     # postgres, redis, migrations, api (serves the dashboard), worker
+make seed                   # fake installation 42 with reviews, findings and feedback (dev only)
+open "http://localhost:8000/auth/dev-login?installation=42"
+```
+`dev-login` exists only when `REVIEWLY_ENV=dev` and `REVIEWLY_DASHBOARD_DEV_LOGIN=true`; the app refuses to start outside dev
+with placeholder secrets or with dev login on. Frontend work: `make dashboard-dev` (Vite, proxies to :8000) and `make dashboard-test`.
+
+**The dashboard** is one page, black on white (white on black in dark mode, following the system until you press the toggle):
+summary tiles, plan and usage, precision by rule, reviews per month (with a table view), repositories, and recent reviews.
+Every query is scoped to one installation, and another tenant's installation returns 404.
+
+**Feedback loop.** Reviewly learns what maintainers think of its comments from:
+- a reply `@reviewly dismiss` or `@reviewly accept` (a deliberate command always outranks reactions),
+- reactions on its comment (👍 ❤️ 🎉 🚀 accept; 👎 😕 dismiss; bots ignored), polled every 10 minutes because GitHub sends no webhook for reactions,
+- resolving a thread, which is shown but **not** counted in precision (people resolve threads for many reasons).
+
+Precision per rule (category) is `accepted / (accepted + dismissed)` and is shown as a dash, never 0% or 100%, until something is judged.
+A finding a repo's maintainers have dismissed at least twice and never accepted is suppressed there from then on.
+
+**Free tier and billing.** Each installation gets `REVIEWLY_FREE_REVIEWS_PER_MONTH` reviews per UTC month (default 20, a placeholder;
+0 = unlimited). Over the limit, the PR gets a short notice and no tokens are spent. Stripe test-mode Checkout upgrades an installation;
+signed webhooks (`/webhooks/stripe`, timestamp-checked against replay) keep the subscription in sync, with a 3-day grace for failed payments.
+
+**Not verified against the real services** (no credentials were available): GitHub OAuth login, the reaction polling and
+comment linking against GitHub itself, and Stripe Checkout and its webhooks. All are covered by tests with mocked HTTP; the
+feedback webhook, dashboard API, tenant isolation and a comment id above 2^31 were exercised live against Postgres.
+Cost figures show "n/a" because there is no verified price for the models in use.

@@ -24,6 +24,7 @@ services:
     environment: &env
       REVIEWLY_DATABASE_URL: postgresql+psycopg://reviewly:reviewly@postgres:5432/reviewly
       REVIEWLY_REDIS_URL: redis://redis:6379/0
+      REVIEWLY_DASHBOARD_DEV_LOGIN: "true"  # local only; refused outside REVIEWLY_ENV=dev
     depends_on:
       postgres: {condition: service_healthy}
   api:
