@@ -1,0 +1,24 @@
+{
+  "id": "bug-marshmallow-2e0a4fc",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update utils.py",
+  "labels": [
+    {
+      "file": "src/marshmallow/utils.py",
+      "start": 200,
+      "end": 200,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "marshmallow-code/marshmallow",
+    "license": "MIT",
+    "commit": "2e0a4fcc832e6dfe10a96b539bb6a79378dbcc60",
+    "url": "https://github.com/marshmallow-code/marshmallow/commit/2e0a4fcc832e6dfe10a96b539bb6a79378dbcc60",
+    "original_subject": "fix: unhandled OSError and OverflowErrors from utils.from_timestamp #2102",
+    "date": "2023-03-26",
+    "technique": "reversed fix commit"
+  }
+}

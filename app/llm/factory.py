@@ -16,10 +16,13 @@ def build_router(settings: Settings, http: httpx.AsyncClient) -> LLMRouter:
         "mistral": (settings.mistral_api_key, settings.mistral_model, MistralProvider),
     }
     providers: list[LLMProvider] = []
-    for name in (n.strip() for n in settings.provider_order.split(",")):
-        key, model, cls = keys.get(name, (None, "", None))
+    for entry in (e.strip() for e in settings.provider_order.split(",") if e.strip()):
+        name, _, model_override = entry.partition(":")
+        key, default_model, cls = keys.get(name, (None, "", None))
         if key and cls:
-            providers.append(cls(key, model, http, timeout=settings.llm_timeout_s))
+            providers.append(
+                cls(key, model_override or default_model, http, timeout=settings.llm_timeout_s)
+            )
     return LLMRouter(
         providers,
         breaker_threshold=settings.breaker_threshold,

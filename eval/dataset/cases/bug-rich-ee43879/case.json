@@ -1,0 +1,24 @@
+{
+  "id": "bug-rich-ee43879",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update console.py",
+  "labels": [
+    {
+      "file": "rich/console.py",
+      "start": 1538,
+      "end": 1538,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "Textualize/rich",
+    "license": "MIT",
+    "commit": "ee43879005609fa782703b42bd3889f7522a80df",
+    "url": "https://github.com/Textualize/rich/commit/ee43879005609fa782703b42bd3889f7522a80df",
+    "original_subject": "fix(console): fix selective enabling of highlighting",
+    "date": "2024-07-10",
+    "technique": "reversed fix commit"
+  }
+}

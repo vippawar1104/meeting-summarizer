@@ -1,0 +1,24 @@
+{
+  "id": "bug-click-1a4d8c1",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update types.py",
+  "labels": [
+    {
+      "file": "src/click/types.py",
+      "start": 262,
+      "end": 262,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/click",
+    "license": "BSD-3-Clause",
+    "commit": "1a4d8c1bb1e8f8e214ede7223bd2c05dc2ce006a",
+    "url": "https://github.com/pallets/click/commit/1a4d8c1bb1e8f8e214ede7223bd2c05dc2ce006a",
+    "original_subject": "Fix metavar for Choice options when show_choices=False (#2365)",
+    "date": "2024-11-02",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "clean-express-805ef52",
+  "kind": "clean",
+  "language": "javascript",
+  "title": "Use loop for acceptParams (#6066)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "805ef52ae6156abffe1dee7fa3c25dcd7923f913",
+    "url": "https://github.com/expressjs/express/commit/805ef52ae6156abffe1dee7fa3c25dcd7923f913",
+    "original_subject": "Use loop for acceptParams (#6066)",
+    "date": "2024-11-14",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

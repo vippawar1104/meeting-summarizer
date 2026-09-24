@@ -1,0 +1,30 @@
+{
+  "id": "bug-httpx-c75ddc2",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update _multipart.py",
+  "labels": [
+    {
+      "file": "httpx/_multipart.py",
+      "start": 43,
+      "end": 47,
+      "note": ""
+    },
+    {
+      "file": "httpx/_multipart.py",
+      "start": 91,
+      "end": 91,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "encode/httpx",
+    "license": "BSD-3-Clause",
+    "commit": "c75ddc26c7e32e7c5fe99263899a187ff537aecc",
+    "url": "https://github.com/encode/httpx/commit/c75ddc26c7e32e7c5fe99263899a187ff537aecc",
+    "original_subject": "Fix Content-Length for unicode file contents with multipart (#1537)",
+    "date": "2021-03-25",
+    "technique": "reversed fix commit"
+  }
+}

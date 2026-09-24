@@ -1,0 +1,22 @@
+diff --git a/lib/response.js b/lib/response.js
+--- a/lib/response.js
++++ b/lib/response.js
+@@ -182,14 +182,14 @@ res.send = function send(body) {
+     chunk = '';
+   }
+ 
++  // skip body for HEAD
+   if (isHead) {
+-    // skip body for HEAD
+     this.end();
+-  } else {
+-    // respond
+-    this.end(chunk, encoding);
+   }
+ 
++  // respond
++  this.end(chunk, encoding);
++
+   return this;
+ };
+ 

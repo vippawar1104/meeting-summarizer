@@ -1,0 +1,46 @@
+{
+  "repos": {
+    "axios_axios": {"name": "axios/axios", "license": "MIT", "language": "javascript"},
+    "expressjs_express": {"name": "expressjs/express", "license": "MIT", "language": "javascript"},
+    "encode_httpx": {"name": "encode/httpx", "license": "BSD-3-Clause", "language": "python"},
+    "pallets_werkzeug": {"name": "pallets/werkzeug", "license": "BSD-3-Clause", "language": "python"},
+    "psf_requests": {"name": "psf/requests", "license": "Apache-2.0", "language": "python"},
+    "pallets_jinja": {"name": "pallets/jinja", "license": "BSD-3-Clause", "language": "python"},
+    "pallets_click": {"name": "pallets/click", "license": "BSD-3-Clause", "language": "python"},
+    "marshmallow-code_marshmallow": {"name": "marshmallow-code/marshmallow", "license": "MIT", "language": "python"},
+    "python-attrs_attrs": {"name": "python-attrs/attrs", "license": "MIT", "language": "python"},
+    "go-chi_chi": {"name": "go-chi/chi", "license": "MIT", "language": "go"},
+    "tj_commander.js": {"name": "tj/commander.js", "license": "MIT", "language": "javascript"},
+    "Textualize_rich": {"name": "Textualize/rich", "license": "MIT", "language": "python"},
+    "iamkun_dayjs": {"name": "iamkun/dayjs", "license": "MIT", "language": "javascript"},
+    "spf13_cobra": {"name": "spf13/cobra", "license": "Apache-2.0", "language": "go"}
+  },
+  "bug": {
+    "axios_axios": ["4106dda", "78b5187", "227c788", "5107ee6", "a092bae"],
+    "expressjs_express": ["5855339", "9dd0e7a", "ee90042", "dab9222", "c24463d"],
+    "encode_httpx": ["321d4aa", "5a63540", "c75ddc2"],
+    "pallets_werkzeug": ["884437a", "7ab3823", "a7ee5b1"],
+    "psf_requests": ["9763a67", "67c5057"],
+    "pallets_jinja": ["05dee9b", "964c61c", "85b9c8a", "e937c8a"],
+    "pallets_click": ["1a4d8c1"],
+    "marshmallow-code_marshmallow": ["2e0a4fc", "1ab5cf7", "65374df"],
+    "python-attrs_attrs": ["1481227", "09161fc"],
+    "go-chi_chi": ["d9d5e31", "f4ab9b1", "2278092"],
+    "tj_commander.js": ["c117172", "cd6e608", "994d24d"],
+    "Textualize_rich": ["ee43879", "4346d31", "5100a2b"]
+  },
+  "clean": {
+    "axios_axios": ["f2b903f"],
+    "encode_httpx": ["7335950"],
+    "expressjs_express": ["26801a0", "805ef52"],
+    "go-chi_chi": ["e235052", "9b9fb55"],
+    "pallets_click": ["607316f"],
+    "pallets_jinja": ["76af711", "1c036ca"],
+    "Textualize_rich": ["10e7081"],
+    "pallets_werkzeug": ["9ffdc2d"],
+    "python-attrs_attrs": ["5bab46d"],
+    "spf13_cobra": ["93d1913"],
+    "tj_commander.js": ["0371e80"],
+    "iamkun_dayjs": ["7ae1a1d"]
+  }
+}

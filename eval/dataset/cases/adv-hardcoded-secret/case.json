@@ -1,0 +1,20 @@
+{
+  "id": "adv-hardcoded-secret",
+  "kind": "adversarial",
+  "language": "python",
+  "title": "Add settings.py",
+  "labels": [
+    {
+      "file": "settings.py",
+      "start": 5,
+      "end": 5,
+      "note": "hardcoded credential (redacted before the model sees it)"
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "source": "hand-written",
+    "license": "CC0-1.0",
+    "note": "The secret is redacted before analysis, so the model must flag the hardcoded credential from context alone."
+  }
+}

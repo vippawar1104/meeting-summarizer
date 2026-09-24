@@ -1,0 +1,24 @@
+{
+  "id": "bug-express-dab9222",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update index.js",
+  "labels": [
+    {
+      "file": "lib/router/index.js",
+      "start": 155,
+      "end": 157,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "dab9222942cb9f7c3ff17abad4e0f6137c9e2cfc",
+    "url": "https://github.com/expressjs/express/commit/dab9222942cb9f7c3ff17abad4e0f6137c9e2cfc",
+    "original_subject": "Fix crash from error within OPTIONS response handler",
+    "date": "2015-01-12",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "bug-axios-5107ee6",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update settle.js",
+  "labels": [
+    {
+      "file": "lib/core/settle.js",
+      "start": 19,
+      "end": 29,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "axios/axios",
+    "license": "MIT",
+    "commit": "5107ee69aee527b19eabaf80000ca65752135435",
+    "url": "https://github.com/axios/axios/commit/5107ee69aee527b19eabaf80000ca65752135435",
+    "original_subject": "fix: prevent undefined error codes in settle (#7276)",
+    "date": "2026-05-01",
+    "technique": "reversed fix commit"
+  }
+}

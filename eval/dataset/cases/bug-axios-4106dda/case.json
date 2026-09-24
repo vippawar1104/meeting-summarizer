@@ -1,0 +1,24 @@
+{
+  "id": "bug-axios-4106dda",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update composeSignals.js",
+  "labels": [
+    {
+      "file": "lib/helpers/composeSignals.js",
+      "start": 48,
+      "end": 48,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "axios/axios",
+    "license": "MIT",
+    "commit": "4106dda9abe43bd3a1471b24dd5d0627470570fc",
+    "url": "https://github.com/axios/axios/commit/4106dda9abe43bd3a1471b24dd5d0627470570fc",
+    "original_subject": "fix: abort composed signals immediately (#11035)",
+    "date": "2026-06-30",
+    "technique": "reversed fix commit"
+  }
+}

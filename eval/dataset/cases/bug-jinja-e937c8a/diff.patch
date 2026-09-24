@@ -1,0 +1,18 @@
+diff --git a/jinja2/filters.py b/jinja2/filters.py
+--- a/jinja2/filters.py
++++ b/jinja2/filters.py
+@@ -567,12 +567,8 @@ def do_indent(
+             rv += u'\n' + u'\n'.join(
+                 indention + line if line else line for line in lines
+             )
+-            try:
+-                # Unescape any strings that were escaped due to concatenation
+-                rv = Markup(rv.unescape())
+-            except AttributeError:
+-                # s was not a Markup instance
+-                pass
++            # Unescape any strings that were escaped due to concatenation
++            rv = Markup(rv.unescape())
+ 
+     if first:
+         rv = indention + rv

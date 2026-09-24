@@ -31,13 +31,14 @@ class Settings(BaseSettings):
     github_app_id: str | None = None
     github_private_key: str | None = None  # PEM contents
 
-    # LLM providers (comma-separated order; providers without a key are skipped)
-    provider_order: str = "gemini,groq,mistral"
+    # LLM providers, tried in this order. Each entry is `provider` or `provider:model`, so the same
+    # provider can appear twice with different models. Entries without a key are skipped.
+    provider_order: str = "groq:openai/gpt-oss-120b,groq:qwen/qwen3.8-27b,gemini,mistral"
     gemini_api_key: str | None = None
     groq_api_key: str | None = None
     mistral_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     mistral_model: str = "mistral-large-latest"
     llm_timeout_s: float = 60.0
     breaker_threshold: int = 3
@@ -70,7 +71,7 @@ class Settings(BaseSettings):
     injection_findings: bool = True  # flag added lines that try to instruct the AI reviewer
 
     # Review pipeline
-    prompt_version: str = "v1"
+    prompt_version: str = "v3"  # v3 scored significantly better than v1 (see README, eval/)
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text
     max_review_chars: int = 120_000  # beyond this the review is partial
     review_concurrency: int = 4

@@ -1,0 +1,24 @@
+{
+  "id": "bug-chi-f4ab9b1",
+  "kind": "bug",
+  "language": "go",
+  "title": "Update context.go",
+  "labels": [
+    {
+      "file": "context.go",
+      "start": 126,
+      "end": 127,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "go-chi/chi",
+    "license": "MIT",
+    "commit": "f4ab9b1f050bdcf14bd096399e8bd57363406514",
+    "url": "https://github.com/go-chi/chi/commit/f4ab9b1f050bdcf14bd096399e8bd57363406514",
+    "original_subject": "fix: #846 (#847)",
+    "date": "2023-10-19",
+    "technique": "reversed fix commit"
+  }
+}

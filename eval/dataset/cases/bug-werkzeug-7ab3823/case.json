@@ -1,0 +1,30 @@
+{
+  "id": "bug-werkzeug-7ab3823",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update test.py",
+  "labels": [
+    {
+      "file": "src/werkzeug/test.py",
+      "start": 812,
+      "end": 812,
+      "note": ""
+    },
+    {
+      "file": "src/werkzeug/test.py",
+      "start": 815,
+      "end": 815,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/werkzeug",
+    "license": "BSD-3-Clause",
+    "commit": "7ab3823fb620d29bcfeeff7499dd9a64ad90f360",
+    "url": "https://github.com/pallets/werkzeug/commit/7ab3823fb620d29bcfeeff7499dd9a64ad90f360",
+    "original_subject": "Fix: Use `issubclass` instead of `isinstance`",
+    "date": "2024-01-08",
+    "technique": "reversed fix commit"
+  }
+}

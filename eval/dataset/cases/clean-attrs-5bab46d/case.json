@@ -1,0 +1,17 @@
+{
+  "id": "clean-attrs-5bab46d",
+  "kind": "clean",
+  "language": "python",
+  "title": "Allow deep_iterable and deep_mapping take lists/tuples (#1449)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "python-attrs/attrs",
+    "license": "MIT",
+    "commit": "5bab46deb916520b153892d73400978ccb08ef96",
+    "url": "https://github.com/python-attrs/attrs/commit/5bab46deb916520b153892d73400978ccb08ef96",
+    "original_subject": "Allow deep_iterable and deep_mapping take lists/tuples (#1449)",
+    "date": "2025-07-29",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

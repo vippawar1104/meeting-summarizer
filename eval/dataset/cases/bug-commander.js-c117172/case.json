@@ -1,0 +1,24 @@
+{
+  "id": "bug-commander.js-c117172",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update command.js",
+  "labels": [
+    {
+      "file": "lib/command.js",
+      "start": 1104,
+      "end": 1106,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "tj/commander.js",
+    "license": "MIT",
+    "commit": "c1171729b7aa79e4b0ef3f4687e7f8615bfddb9e",
+    "url": "https://github.com/tj/commander.js/commit/c1171729b7aa79e4b0ef3f4687e7f8615bfddb9e",
+    "original_subject": "Fix help for commands with executable handler & only a short help flag",
+    "date": "2023-08-13",
+    "technique": "reversed fix commit"
+  }
+}

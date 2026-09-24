@@ -1,0 +1,17 @@
+{
+  "id": "clean-chi-9b9fb55",
+  "kind": "clean",
+  "language": "go",
+  "title": "Replace methodTypString func with reverseMethodMap (#1018)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "go-chi/chi",
+    "license": "MIT",
+    "commit": "9b9fb55def404397748a9fc7e044efe9db1d618e",
+    "url": "https://github.com/go-chi/chi/commit/9b9fb55def404397748a9fc7e044efe9db1d618e",
+    "original_subject": "Replace methodTypString func with reverseMethodMap (#1018)",
+    "date": "2025-08-26",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

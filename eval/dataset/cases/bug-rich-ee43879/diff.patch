@@ -1,0 +1,16 @@
+diff --git a/rich/console.py b/rich/console.py
+--- a/rich/console.py
++++ b/rich/console.py
+@@ -1535,11 +1535,7 @@ class Console:
+             if isinstance(renderable, str):
+                 append_text(
+                     self.render_str(
+-                        renderable,
+-                        emoji=emoji,
+-                        markup=markup,
+-                        highlight=highlight,
+-                        highlighter=_highlighter,
++                        renderable, emoji=emoji, markup=markup, highlighter=_highlighter
+                     )
+                 )
+             elif isinstance(renderable, Text):

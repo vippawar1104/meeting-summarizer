@@ -1,0 +1,24 @@
+{
+  "id": "bug-requests-67c5057",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update auth.py",
+  "labels": [
+    {
+      "file": "requests/auth.py",
+      "start": 201,
+      "end": 201,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "psf/requests",
+    "license": "Apache-2.0",
+    "commit": "67c505781cece96763b86c47967efb785f33b079",
+    "url": "https://github.com/psf/requests/commit/67c505781cece96763b86c47967efb785f33b079",
+    "original_subject": "Fix HTTPDigestAuth not to treat non-file as a file",
+    "date": "2014-11-12",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "bug-rich-4346d31",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update pretty.py",
+  "labels": [
+    {
+      "file": "rich/traceback.py",
+      "start": 293,
+      "end": 293,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "Textualize/rich",
+    "license": "MIT",
+    "commit": "4346d3199fb5c283f685408c8b529c51121b514d",
+    "url": "https://github.com/Textualize/rich/commit/4346d3199fb5c283f685408c8b529c51121b514d",
+    "original_subject": "fix for locals maz length",
+    "date": "2022-11-18",
+    "technique": "reversed fix commit"
+  }
+}

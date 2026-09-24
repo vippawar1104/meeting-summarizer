@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,13 @@ class AllProvidersFailed(LLMError):
 
 class Completer(Protocol):
     async def complete(self, messages: list[Message], *, json_mode: bool = True) -> LLMResult: ...
+
+
+class RouterLike(Completer, Protocol):
+    @property
+    def providers(self) -> Sequence[Any]: ...
+
+    def status(self) -> dict[str, str]: ...
 
 
 class LLMProvider(Protocol):

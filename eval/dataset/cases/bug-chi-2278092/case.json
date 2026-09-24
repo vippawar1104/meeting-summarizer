@@ -1,0 +1,30 @@
+{
+  "id": "bug-chi-2278092",
+  "kind": "bug",
+  "language": "go",
+  "title": "Update tree.go",
+  "labels": [
+    {
+      "file": "tree.go",
+      "start": 220,
+      "end": 222,
+      "note": ""
+    },
+    {
+      "file": "tree.go",
+      "start": 224,
+      "end": 226,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "go-chi/chi",
+    "license": "MIT",
+    "commit": "22780923d9779228922c68cf7225dcffb7bec62f",
+    "url": "https://github.com/go-chi/chi/commit/22780923d9779228922c68cf7225dcffb7bec62f",
+    "original_subject": "Fix for when prefix matches a static and wildcard node",
+    "date": "2015-10-28",
+    "technique": "reversed fix commit"
+  }
+}

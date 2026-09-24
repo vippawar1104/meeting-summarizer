@@ -1,0 +1,17 @@
+{
+  "id": "clean-chi-e235052",
+  "kind": "clean",
+  "language": "go",
+  "title": "Make use of strings.Cut (#1005)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "go-chi/chi",
+    "license": "MIT",
+    "commit": "e235052c10146fb724439442fc9d9a23e19fe931",
+    "url": "https://github.com/go-chi/chi/commit/e235052c10146fb724439442fc9d9a23e19fe931",
+    "original_subject": "Make use of strings.Cut (#1005)",
+    "date": "2025-06-20",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

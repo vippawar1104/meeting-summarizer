@@ -1,0 +1,16 @@
+diff --git a/middleware/wrap_writer.go b/middleware/wrap_writer.go
+--- a/middleware/wrap_writer.go
++++ b/middleware/wrap_writer.go
+@@ -81,11 +81,7 @@ type basicWriter struct {
+ }
+ 
+ func (b *basicWriter) WriteHeader(code int) {
+-	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
+-		if !b.discard {
+-			b.ResponseWriter.WriteHeader(code)
+-		}
+-	} else if !b.wroteHeader {
++	if !b.wroteHeader {
+ 		b.code = code
+ 		b.wroteHeader = true
+ 		if !b.discard {

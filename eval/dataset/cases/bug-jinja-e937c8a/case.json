@@ -1,0 +1,24 @@
+{
+  "id": "bug-jinja-e937c8a",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update filters.py",
+  "labels": [
+    {
+      "file": "jinja2/filters.py",
+      "start": 570,
+      "end": 571,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/jinja",
+    "license": "BSD-3-Clause",
+    "commit": "e937c8a0de02bbbb5f19f9a65e0f2f9a0ffb6446",
+    "url": "https://github.com/pallets/jinja/commit/e937c8a0de02bbbb5f19f9a65e0f2f9a0ffb6446",
+    "original_subject": "Fix cases where filter input is not a Markup type",
+    "date": "2018-03-19",
+    "technique": "reversed fix commit"
+  }
+}

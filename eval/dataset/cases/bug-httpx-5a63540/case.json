@@ -1,0 +1,30 @@
+{
+  "id": "bug-httpx-5a63540",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update client.py",
+  "labels": [
+    {
+      "file": "httpx/client.py",
+      "start": 625,
+      "end": 625,
+      "note": ""
+    },
+    {
+      "file": "httpx/client.py",
+      "start": 1149,
+      "end": 1149,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "encode/httpx",
+    "license": "BSD-3-Clause",
+    "commit": "5a63540e8ab35209849894819ac731c836fdcf27",
+    "url": "https://github.com/encode/httpx/commit/5a63540e8ab35209849894819ac731c836fdcf27",
+    "original_subject": "Fix for streaming a redirect response body with allow_redirects=False (#766)",
+    "date": "2020-01-17",
+    "technique": "reversed fix commit"
+  }
+}

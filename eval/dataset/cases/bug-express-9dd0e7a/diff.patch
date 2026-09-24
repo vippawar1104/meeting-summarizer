@@ -1,0 +1,23 @@
+diff --git a/lib/response.js b/lib/response.js
+--- a/lib/response.js
++++ b/lib/response.js
+@@ -322,15 +322,10 @@ res.jsonp = function jsonp(obj) {
+     // restrict callback charset
+     callback = callback.replace(/[^\[\]\w$.]/g, '');
+ 
+-    if (body === undefined) {
+-      // empty argument
+-      body = ''
+-    } else if (typeof body === 'string') {
+-      // replace chars not allowed in JavaScript that are in JSON
+-      body = body
+-        .replace(/\u2028/g, '\\u2028')
+-        .replace(/\u2029/g, '\\u2029')
+-    }
++    // replace chars not allowed in JavaScript that are in JSON
++    body = body
++      .replace(/\u2028/g, '\\u2028')
++      .replace(/\u2029/g, '\\u2029');
+ 
+     // the /**/ is a specific security mitigation for "Rosetta Flash JSONP abuse"
+     // the typeof check is just to reduce client error noise

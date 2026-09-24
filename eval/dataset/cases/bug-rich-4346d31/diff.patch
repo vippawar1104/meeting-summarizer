@@ -1,0 +1,28 @@
+diff --git a/rich/pretty.py b/rich/pretty.py
+--- a/rich/pretty.py
++++ b/rich/pretty.py
+@@ -371,7 +371,6 @@ class Pretty(JupyterMixin):
+             indent_size=self.indent_size,
+             max_length=self.max_length,
+             max_string=self.max_string,
+-            max_depth=self.max_depth,
+             expand_all=self.expand_all,
+         )
+         text_width = (
+diff --git a/rich/traceback.py b/rich/traceback.py
+--- a/rich/traceback.py
++++ b/rich/traceback.py
+@@ -290,12 +290,7 @@ class Traceback:
+             Traceback: A Traceback instance that may be printed.
+         """
+         rich_traceback = cls.extract(
+-            exc_type,
+-            exc_value,
+-            traceback,
+-            show_locals=show_locals,
+-            locals_max_length=locals_max_length,
+-            locals_max_string=locals_max_string,
++            exc_type, exc_value, traceback, show_locals=show_locals
+         )
+         return cls(
+             rich_traceback,

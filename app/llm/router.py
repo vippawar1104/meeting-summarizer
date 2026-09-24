@@ -28,29 +28,36 @@ class LLMRouter:
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.providers = providers
+        # Two models of the same provider (e.g. two Groq models) must not share one breaker.
+        names = [p.name for p in providers]
+        self._ids = {
+            id(p): p.name if names.count(p.name) == 1 else f"{p.name}:{p.model}" for p in providers
+        }
         self.breakers = {
-            p.name: CircuitBreaker(breaker_threshold, breaker_cooldown_s, clock) for p in providers
+            self._ids[id(p)]: CircuitBreaker(breaker_threshold, breaker_cooldown_s, clock)
+            for p in providers
         }
 
     async def complete(self, messages: list[Message], *, json_mode: bool = True) -> LLMResult:
         errors: list[str] = []
         for provider in self.providers:
-            breaker = self.breakers[provider.name]
+            pid = self._ids[id(provider)]
+            breaker = self.breakers[pid]
             if not breaker.allow():
-                errors.append(f"{provider.name}: circuit open")
+                errors.append(f"{pid}: circuit open")
                 continue
             try:
                 result = await provider.complete(messages, json_mode=json_mode)
             except RetryableLLMError as exc:
                 breaker.record_failure()
-                errors.append(f"{provider.name}: {exc}")
-                log.warning("llm_provider_failed", provider=provider.name, error=str(exc))
+                errors.append(f"{pid}: {exc}")
+                log.warning("llm_provider_failed", provider=pid, error=str(exc))
                 continue
             except BadRequest as exc:
                 # The provider is healthy, it just rejected this request; another may accept it.
                 breaker.record_success()
-                errors.append(f"{provider.name}: {exc}")
-                log.warning("llm_request_rejected", provider=provider.name, error=str(exc))
+                errors.append(f"{pid}: {exc}")
+                log.warning("llm_request_rejected", provider=pid, error=str(exc))
                 continue
             breaker.record_success()
             return result

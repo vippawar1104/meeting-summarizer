@@ -1,0 +1,36 @@
+{
+  "id": "bug-axios-78b5187",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update parseHeaders.js",
+  "labels": [
+    {
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 53,
+      "end": 53,
+      "note": ""
+    },
+    {
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 58,
+      "end": 58,
+      "note": ""
+    },
+    {
+      "file": "lib/helpers/parseHeaders.js",
+      "start": 64,
+      "end": 64,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "axios/axios",
+    "license": "MIT",
+    "commit": "78b5187ee7b6b97e416caf4e116fe7c8d3c2c2ca",
+    "url": "https://github.com/axios/axios/commit/78b5187ee7b6b97e416caf4e116fe7c8d3c2c2ca",
+    "original_subject": "fix: preserve empty duplicate header values (#11036)",
+    "date": "2026-06-30",
+    "technique": "reversed fix commit"
+  }
+}

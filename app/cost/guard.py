@@ -6,8 +6,7 @@ import structlog
 
 from app.cost.budget import TokenBudget
 from app.cost.ratelimit import RateLimiter
-from app.llm.base import LLMError, LLMProvider, LLMResult, Message
-from app.llm.router import LLMRouter
+from app.llm.base import LLMError, LLMProvider, LLMResult, Message, RouterLike
 from app.safety.redact import redact_text
 
 log = structlog.get_logger()
@@ -43,7 +42,7 @@ class GuardedRouter:
 
     def __init__(
         self,
-        inner: LLMRouter,
+        inner: RouterLike,
         *,
         budget: TokenBudget | None = None,
         limiter: RateLimiter | None = None,
@@ -56,7 +55,7 @@ class GuardedRouter:
 
     @property
     def providers(self) -> list[LLMProvider]:
-        return self._inner.providers
+        return list(self._inner.providers)
 
     def status(self) -> dict[str, str]:
         return self._inner.status()

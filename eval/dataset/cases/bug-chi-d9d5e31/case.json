@@ -1,0 +1,24 @@
+{
+  "id": "bug-chi-d9d5e31",
+  "kind": "bug",
+  "language": "go",
+  "title": "Update wrap_writer.go",
+  "labels": [
+    {
+      "file": "middleware/wrap_writer.go",
+      "start": 84,
+      "end": 84,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "go-chi/chi",
+    "license": "MIT",
+    "commit": "d9d5e318c2701f0dfd1decf6f77566501d720d20",
+    "url": "https://github.com/go-chi/chi/commit/d9d5e318c2701f0dfd1decf6f77566501d720d20",
+    "original_subject": "fix: allow multiple informational status (#961)",
+    "date": "2024-12-14",
+    "technique": "reversed fix commit"
+  }
+}

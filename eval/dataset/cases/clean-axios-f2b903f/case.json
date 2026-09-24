@@ -1,0 +1,17 @@
+{
+  "id": "clean-axios-f2b903f",
+  "kind": "clean",
+  "language": "javascript",
+  "title": "refactor(utils): use WeakSet for cycle detection in toJSONObject (#10832)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "axios/axios",
+    "license": "MIT",
+    "commit": "f2b903fceaa0a02cefd77f6b4b123c679605aae9",
+    "url": "https://github.com/axios/axios/commit/f2b903fceaa0a02cefd77f6b4b123c679605aae9",
+    "original_subject": "refactor(utils): use WeakSet for cycle detection in toJSONObject (#10832)",
+    "date": "2026-05-06",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

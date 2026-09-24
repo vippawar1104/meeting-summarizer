@@ -1,0 +1,17 @@
+{
+  "id": "clean-werkzeug-9ffdc2d",
+  "kind": "clean",
+  "language": "python",
+  "title": "use match to remove port",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/werkzeug",
+    "license": "BSD-3-Clause",
+    "commit": "9ffdc2d38581119fa82829bdbde4b75e2519866f",
+    "url": "https://github.com/pallets/werkzeug/commit/9ffdc2d38581119fa82829bdbde4b75e2519866f",
+    "original_subject": "use match to remove port",
+    "date": "2026-04-23",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

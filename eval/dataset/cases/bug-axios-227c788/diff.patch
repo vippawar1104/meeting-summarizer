@@ -1,0 +1,16 @@
+diff --git a/lib/adapters/http.js b/lib/adapters/http.js
+--- a/lib/adapters/http.js
++++ b/lib/adapters/http.js
+@@ -1205,11 +1205,7 @@ export default isHttpAdapterSupported &&
+ 
+       req.on('socket', function handleRequestSocket(socket) {
+         // default interval of sending ack packet is 1 minute
+-        // proxy agents (e.g. agent-base) may return a generic Duplex stream
+-        // that doesn't have setKeepAlive, so guard before calling
+-        if (typeof socket.setKeepAlive === 'function') {
+-          socket.setKeepAlive(true, 1000 * 60);
+-        }
++        socket.setKeepAlive(true, 1000 * 60);
+ 
+         // Install a single 'error' listener per socket (not per request) to avoid
+         // accumulating listeners on pooled keep-alive sockets that get reassigned

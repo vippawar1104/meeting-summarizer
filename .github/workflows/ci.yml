@@ -22,4 +22,6 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
-      - run: uv run pytest -q
+      - run: uv run python -m eval.validate
+      - run: uv run python -m eval.gate --model baseline:regex --prompt v1
+      - run: if [ -d tests ]; then uv run pytest -q; else echo "no tests directory in this checkout, skipping"; fi
