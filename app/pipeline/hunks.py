@@ -11,6 +11,7 @@ class HunkGroup:
     text: str
     valid_lines: set[int]
     added: int
+    added_text: str = ""  # the raw text of added lines, used as the retrieval query
 
     @property
     def chars(self) -> int:
@@ -61,6 +62,7 @@ def group_file(f: FileDiff, max_chars: int) -> list[HunkGroup]:
                 text=f"File: {f.path}\n{body}",
                 valid_lines={ln.new_no for ln in all_lines if ln.new_no and ln.kind != "del"},
                 added=sum(1 for ln in all_lines if ln.kind == "add"),
+                added_text="\n".join(ln.content for ln in all_lines if ln.kind == "add"),
             )
         )
         pending, pending_size = [], 0
