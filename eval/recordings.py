@@ -6,8 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.llm.base import LLMResult, Message, RetryableLLMError
-from app.llm.router import LLMRouter
+from app.llm.base import Completer, LLMResult, Message, RetryableLLMError
 
 
 class MissingRecording(Exception):
@@ -66,17 +65,19 @@ class RecordingRouter:
 
     def __init__(
         self,
-        inner: LLMRouter | None,
+        inner: Completer | None,
         store: RecordingStore,
         model: str,
         mode: str = "auto",
         *,
         retries: int = 10,
         rpm: float | None = None,
+        max_hint_wait_s: float = 300.0,
     ) -> None:
         assert mode in ("auto", "live", "replay")
         self._inner, self._store, self._model, self._mode = inner, store, model, mode
         self._retries = retries
+        self._max_hint_wait_s = max_hint_wait_s
         self._interval = (
             60.0 / rpm if rpm else 0.0
         )  # spacing that keeps us under a requests/minute cap
@@ -116,6 +117,8 @@ class RecordingRouter:
                 if attempt == self._retries:
                     raise
                 hinted = getattr(exc, "retry_after_s", None)  # the provider says how long to wait
+                if hinted and hinted > self._max_hint_wait_s:
+                    raise  # e.g. a daily quota: waiting hours would just hang the run
                 await asyncio.sleep(hinted + 1.0 if hinted else min(60.0, 2.0 * 2**attempt))
         elapsed = asyncio.get_running_loop().time() - start
         self._store.add_reply(

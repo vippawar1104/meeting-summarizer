@@ -31,8 +31,9 @@ class Settings(BaseSettings):
     github_app_id: str | None = None
     github_private_key: str | None = None  # PEM contents
 
-    # LLM providers (comma-separated order; providers without a key are skipped)
-    provider_order: str = "gemini,groq,mistral"
+    # LLM providers, tried in this order. Each entry is `provider` or `provider:model`, so the same
+    # provider can appear twice with different models. Entries without a key are skipped.
+    provider_order: str = "groq:openai/gpt-oss-120b,groq:qwen/qwen3.8-27b,gemini,mistral"
     gemini_api_key: str | None = None
     groq_api_key: str | None = None
     mistral_api_key: str | None = None

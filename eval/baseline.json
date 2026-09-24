@@ -8,5 +8,15 @@
     "precision": null,
     "recall": 0.0,
     "fp_per_clean_pr": 0.0
+  },
+  "groq:openai/gpt-oss-120b|v1": {
+    "precision": 0.6714285714285714,
+    "recall": 0.975609756097561,
+    "fp_per_clean_pr": 1.1764705882352942
+  },
+  "groq:openai/gpt-oss-120b|v3": {
+    "precision": 0.8392857142857143,
+    "recall": 0.975609756097561,
+    "fp_per_clean_pr": 0.5294117647058824
   }
 }

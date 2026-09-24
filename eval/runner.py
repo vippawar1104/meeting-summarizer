@@ -17,7 +17,6 @@ from app.github.diff import parse_diff
 from app.llm.base import LLMProvider, RouterLike
 from app.llm.gemini import GeminiProvider
 from app.llm.openai_compat import GroqProvider, MistralProvider
-from app.llm.router import LLMRouter
 from app.pipeline.findings import Finding
 from app.pipeline.merge import normalize_path
 from app.pipeline.review import ReviewPipeline
@@ -109,7 +108,7 @@ def build_router(
         return GuardedRouter(NullRouter())
     if model == "baseline:regex":
         return GuardedRouter(RegexRouter())
-    inner: LLMRouter | None = None
+    inner: LLMProvider | None = None
     if mode != "replay":
         provider, name = split_model(model)
         env_var, cls = PROVIDERS[provider]
@@ -117,7 +116,9 @@ def build_router(
             raise SystemExit(
                 f"{env_var} is not set: cannot call {model} live. Use --mode replay to score from recordings."
             )
-        inner = LLMRouter([cls(api_key, name, http, timeout=120.0)])
+        # The provider is called directly, with no fallback router or circuit breaker in between: the
+        # recording layer needs the raw throttling errors (and their retry hints) to wait correctly.
+        inner = cls(api_key, name, http, timeout=120.0)
     # Redaction runs first (in the guard), so recordings are keyed on exactly what a provider would see.
     return GuardedRouter(RecordingRouter(inner, store, model, mode, rpm=rpm))
 

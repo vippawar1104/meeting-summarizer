@@ -62,6 +62,29 @@ Reproduce: `make eval-baselines` (no key needed) or `make eval MODEL=gemini-2.5-
 |---|---|---|---|---|---|---|---|---|---|
 | baseline:null | v1 | 58 (0 err) | n/a (nothing posted) | 0% (0%–0%) | 0.00 (0.00–0.00) | n/a | 0.0s / 0.0s | 0 | n/a |
 | baseline:regex | v1 | 58 (0 err) | 100% (100%–100%) | 2% (0%–8%) | 0.00 (0.00–0.00) | 100% | 0.0s / 0.0s | 0 | n/a |
+| groq:openai/gpt-oss-120b | v1 | 58 (0 err) | 67% (52%–82%) | 98% (92%–100%) | 1.18 (0.69–1.73) | 100% | 9.7s / 46.3s | 1798 | n/a |
+| groq:openai/gpt-oss-120b | v3 | 58 (0 err) | 84% (73%–93%) | 98% (91%–100%) | 0.53 (0.29–0.77) | 100% | 15.3s / 101.3s | 2397 | n/a |
+| groq:openai/gpt-oss-20b | v1 | 58 (6 err) | 68% (51%–84%) | 87% (76%–97%) | 1.23 (0.70–2.00) | 100% | 16.1s / 125.3s | 2224 | n/a |
+| groq:qwen/qwen3.8-27b | v1 | 58 (0 err) | 79% (67%–90%) | 95% (88%–100%) | 0.59 (0.27–0.93) | 100% | 6.5s / 72.4s | 1304 | n/a |
+| groq:qwen/qwen3.8-27b | v3 | 58 (0 err) | 86% (76%–94%) | 95% (88%–100%) | 0.41 (0.18–0.65) | 100% | 17.3s / 79.3s | 1947 | n/a |
 <!-- eval-table:end -->
 
-Model rows other than the baselines are **not run yet**: no Gemini API key was available when this milestone was built.
+### What the numbers say
+Measured on Groq's free tier (58 cases each; `gpt-oss-120b` and `qwen3.8-27b` had 0 errors, `gpt-oss-20b` had 6 cases that still
+failed after retries and its row covers only the cases that scored).
+
+- **Prompt v3 is a proven improvement on `gpt-oss-120b`.** Paired over the same 58 cases: precision +16.8 points (95% CI +6.1 to
+  +28.0), false alarms per no-bug PR 1.18 to 0.53 (CI -1.24 to -0.17), recall unchanged (98%). v3 adds rules of evidence (no
+  speculation about unseen code, no guessing intent, at most 3 findings, stricter confidence levels). Cost: about 33% more tokens per PR.
+- **On `qwen3.8-27b` v3 helps in the same direction but not significantly** (precision +7.1 points, CI -0.3 to +14.3). Its v1 was already
+  quieter than `gpt-oss-120b` v1.
+- The default prompt is v3, and the default provider order is `gpt-oss-120b` with `qwen3.8-27b` as fallback.
+
+### Read these numbers carefully
+- 58 cases is small; the intervals are wide and many differences between models are not significant.
+- **Recall is probably optimistic.** Labels mark whole regions a fix touched, a hit may be 2 lines away, and the bug cases come from
+  famous libraries a model may have seen in training. Do not read 98% as "catches 98% of real bugs".
+- **Precision is probably slightly pessimistic.** "Clean" PRs are only assumed clean, so a genuine latent bug reported there counts as a false alarm.
+- Latency includes waiting out Groq's per-minute rate limits while several runs shared the budget, so treat it as an upper bound.
+- Cost columns are n/a: no verified price for these models.
+- Remaining false alarms are mostly confident speculation (0.93 to 0.95). The next improvement to try is a second verification pass that re-checks each finding against the visible diff.
