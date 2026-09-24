@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 
 from app.pipeline.findings import SEVERITY_WEIGHT, Finding
+from app.pipeline.post import fingerprint
 
 _WORD = re.compile(r"[a-z0-9_]{3,}")
 
@@ -13,6 +14,7 @@ class MergeStats:
     below_confidence: int = 0
     duplicates: int = 0
     over_cap: int = 0
+    suppressed: int = 0  # dismissed by maintainers before; not posted again
 
 
 def normalize_path(path: str, known: dict[str, set[int]]) -> str | None:
@@ -56,6 +58,7 @@ def merge_findings(
     valid_lines: dict[str, set[int]],
     min_confidence: float,
     max_comments: int,
+    suppressed: frozenset[str] = frozenset(),
 ) -> tuple[list[Finding], MergeStats]:
     """Verify every finding points at a real diff line, then filter, dedupe, rank and cap."""
     stats = MergeStats()
@@ -68,6 +71,8 @@ def merge_findings(
             stats.line_not_in_diff += 1  # never post a comment on a line GitHub has no diff for
         elif f.confidence < min_confidence:
             stats.below_confidence += 1
+        elif fingerprint(f.model_copy(update={"file": path})) in suppressed:
+            stats.suppressed += 1
         else:
             verified.append(f.model_copy(update={"file": path}))
 

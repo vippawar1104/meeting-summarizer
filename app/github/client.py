@@ -177,6 +177,34 @@ class GitHubClient:
                 break
         return reviews
 
+    async def list_review_comments(
+        self, inst: int, repo: str, number: int, review_id: int
+    ) -> list[dict[str, Any]]:
+        resp = await self._request(
+            inst,
+            "GET",
+            f"/repos/{repo}/pulls/{number}/reviews/{review_id}/comments",
+            params={"per_page": 100},
+        )
+        data: list[dict[str, Any]] = resp.json()
+        return data
+
+    async def list_comment_reactions(
+        self, inst: int, repo: str, comment_id: int
+    ) -> list[dict[str, Any]] | None:
+        """Reactions on a review comment, or None if the comment no longer exists."""
+        try:
+            resp = await self._request(
+                inst,
+                "GET",
+                f"/repos/{repo}/pulls/comments/{comment_id}/reactions",
+                params={"per_page": 100},
+            )
+        except GitHubNotFound:
+            return None
+        data: list[dict[str, Any]] = resp.json()
+        return data
+
     async def create_comment(self, inst: int, repo: str, number: int, body: str) -> None:
         await self._request(
             inst, "POST", f"/repos/{repo}/issues/{number}/comments", json={"body": body}

@@ -11,12 +11,19 @@ from sqlmodel import col
 
 from app.core.logging import correlation_id
 from app.db.models import Job, JobStatus
+from app.feedback.apply import parse_command, record_feedback, set_resolved
 
 router = APIRouter()
 log = structlog.get_logger()
 
 REVIEW_ACTIONS = {"opened", "synchronize", "reopened", "ready_for_review"}
-SUPPORTED_EVENTS = {"pull_request", "push", "installation", "installation_repositories"}
+FEEDBACK_EVENTS = {"pull_request_review_comment", "pull_request_review_thread"}
+SUPPORTED_EVENTS = {
+    "pull_request",
+    "push",
+    "installation",
+    "installation_repositories",
+} | FEEDBACK_EVENTS
 # Indexing is slow; a large "size" keeps it behind reviews inside the same installation.
 INDEX_PRIORITY_LINES = 2000
 
@@ -51,6 +58,13 @@ async def github_webhook(
     if x_github_event not in SUPPORTED_EVENTS:
         return _ok("ignored_event")
     payload: dict[str, Any] = json.loads(body)
+    if x_github_event in FEEDBACK_EVENTS:
+        try:
+            return _ok(await handle_feedback_event(request, x_github_event, payload))
+        except Exception:
+            await redis.delete(dedupe_key)
+            log.exception("feedback_webhook_failed", delivery=x_github_delivery)
+            raise HTTPException(status_code=503, detail="temporarily unavailable") from None
     jobs = jobs_for_event(x_github_event, payload, x_github_delivery)
     if not jobs:
         return _ok("ignored_action")
@@ -66,6 +80,34 @@ async def github_webhook(
     for job in jobs:
         log.info("job_enqueued", job_id=job.id, kind=job.kind, repo=job.repo_full_name)
     return _ok("enqueued" if any(outcomes) else "duplicate_review")
+
+
+async def handle_feedback_event(request: Request, event: str, payload: dict[str, Any]) -> str:
+    """Replies like `@reviewly dismiss` and resolved threads. One indexed UPDATE each: no queue."""
+    installation = (payload.get("installation") or {}).get("id")
+    if installation is None:
+        return "ignored_action"
+    sm = request.app.state.sessionmaker
+    action = payload.get("action")
+
+    if event == "pull_request_review_comment":
+        comment = payload.get("comment") or {}
+        parent = comment.get("in_reply_to_id")
+        if action != "created" or not parent:
+            return "ignored_action"
+        if (comment.get("user") or {}).get("type") == "Bot":
+            return "ignored_action"  # never react to our own (or another bot's) comments
+        verdict = parse_command(comment.get("body") or "")
+        if verdict is None:
+            return "ignored_action"
+        updated = await record_feedback(sm, int(installation), int(parent), verdict, "command")
+        return "feedback_recorded" if updated else "unknown_comment"
+
+    if action in ("resolved", "unresolved"):
+        ids = [int(c["id"]) for c in (payload.get("thread") or {}).get("comments", []) if "id" in c]
+        await set_resolved(sm, int(installation), ids, action == "resolved")
+        return f"thread_{action}"
+    return "ignored_action"
 
 
 async def _persist_and_enqueue(request: Request, job: Job) -> bool:

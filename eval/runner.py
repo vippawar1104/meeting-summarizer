@@ -93,6 +93,7 @@ def make_settings(model: str, prompt: str) -> Settings:
         review_concurrency=2,
         daily_token_budget=0,
         cache_enabled=False,
+        free_reviews_per_month=0,  # unlimited: an evaluation is not a customer
     )
 
 

@@ -3,12 +3,17 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlmodel import col
 
+from app.billing.plans import PlanStatus, plan_status
+from app.billing.usage import record_review
 from app.core.config import Settings
 from app.cost.cache import ReviewCache
 from app.cost.guard import BudgetExceeded, current_installation
 from app.db.models import FindingRow, Job
+from app.feedback.apply import suppressed_fingerprints
 from app.github.client import GitHubClient, GitHubNotFound, GitHubValidation
 from app.github.diff import parse_diff
 from app.llm.base import Completer
@@ -18,6 +23,7 @@ from app.pipeline.findings import Category, Finding, Severity, parse_findings
 from app.pipeline.hunks import HunkGroup, group_files, select_within_budget
 from app.pipeline.merge import MergeStats, merge_findings
 from app.pipeline.post import (
+    FINDING_MARKER_RE,
     SummaryInfo,
     build_review_payload,
     build_summary,
@@ -97,6 +103,10 @@ class ReviewPipeline:
             # A retry after a partial failure must not post a second review.
             if has_review_marker(await self._gh.list_reviews(inst, repo, number), job.head_sha):
                 raise SkipJob("already reviewed")
+            plan = await plan_status(self._sm, self._s, inst)
+            if not plan.allowed:
+                await self._limit_notice(job, plan)
+                raise SkipJob("free-tier monthly review limit reached")
 
             diff_text = await self._gh.get_diff(inst, repo, number)
             # Config comes from the BASE branch: a PR must not be able to rewrite its own rules.
@@ -163,6 +173,7 @@ class ReviewPipeline:
             valid_lines=valid_lines,
             min_confidence=config.min_confidence,
             max_comments=max_comments,
+            suppressed=await self._suppressed(job),
         )
         out.merge, out.posted = stats, final
 
@@ -193,6 +204,7 @@ class ReviewPipeline:
             )
         out.review_id = review.get("id")
         await self._persist(job, out)
+        await self._after_post(job, out)
         log.info(
             "review_posted",
             job_id=job.id,
@@ -262,6 +274,69 @@ class ReviewPipeline:
                 return result
 
         return list(await asyncio.gather(*(one(g) for g in groups), return_exceptions=True))
+
+    async def _suppressed(self, job: Job) -> frozenset[str]:
+        try:
+            return await suppressed_fingerprints(self._sm, job.installation_id, job.repo_full_name)
+        except Exception:
+            log.exception("suppression_lookup_failed", job_id=job.id)  # never block a review
+            return frozenset()
+
+    async def _limit_notice(self, job: Job, plan: PlanStatus) -> None:
+        body = (
+            f"**Reviewly** did not review this pull request: this installation has used its "
+            f"{plan.limit} free reviews for this month. Upgrade at "
+            f"{self._s.public_url}/ to keep getting reviews, or wait for the monthly reset."
+            f"\n\n<!-- reviewly:limit:{job.head_sha} -->"
+        )
+        try:
+            await self._gh.create_comment(
+                job.installation_id, job.repo_full_name, job.pr_number, body
+            )
+        except Exception:
+            log.exception("limit_notice_failed", job_id=job.id)
+
+    async def _after_post(self, job: Job, out: ReviewOutcome) -> None:
+        """Best effort, after the review is already on GitHub: never fail the job over bookkeeping."""
+        try:
+            await record_review(
+                self._sm,
+                job.installation_id,
+                prompt_tokens=out.prompt_tokens,
+                completion_tokens=out.completion_tokens,
+                cost_usd=out.cost_usd,
+                findings=len(out.posted),
+            )
+        except Exception:
+            log.exception("usage_record_failed", job_id=job.id)
+        if out.review_id and out.posted:
+            await self._link_comments(job, out.review_id)
+
+    async def _link_comments(self, job: Job, review_id: int) -> None:
+        """Remember which GitHub comment carries which finding, so reactions and replies can be
+        traced back to it. The comment body holds a hidden fingerprint marker to match on."""
+        try:
+            comments = await self._gh.list_review_comments(
+                job.installation_id, job.repo_full_name, job.pr_number, review_id
+            )
+        except Exception:
+            log.exception("comment_link_failed", job_id=job.id)
+            return
+        ids: dict[str, list[int]] = {}
+        for c in comments:
+            m = FINDING_MARKER_RE.search(c.get("body") or "")
+            if m:
+                ids.setdefault(m[1], []).append(int(c["id"]))
+        async with self._sm() as s:
+            rows = (
+                (await s.execute(select(FindingRow).where(col(FindingRow.job_id) == job.id)))
+                .scalars()
+                .all()
+            )
+            for row in rows:
+                if ids.get(row.fingerprint):
+                    row.github_comment_id = ids[row.fingerprint].pop(0)
+            await s.commit()
 
     async def _cache_get(self, inst: int, key: str) -> str | None:
         try:

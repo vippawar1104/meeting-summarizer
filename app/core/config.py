@@ -70,6 +70,21 @@ class Settings(BaseSettings):
     redaction_enabled: bool = True
     injection_findings: bool = True  # flag added lines that try to instruct the AI reviewer
 
+    # Billing (Stripe test mode) and free tier
+    free_reviews_per_month: int = (
+        20  # per installation; 0 = unlimited. A placeholder, not a pricing decision
+    )
+    public_url: str = "http://localhost:8000"
+    stripe_secret_key: str | None = None
+    stripe_price_id: str | None = None
+    stripe_webhook_secret: str | None = None
+
+    # Dashboard
+    dashboard_secret: str = "dev-dashboard-secret-change-me"  # signs session cookies
+    dashboard_dev_login: bool = False  # local-only login without a GitHub OAuth app
+    github_oauth_client_id: str | None = None
+    github_oauth_client_secret: str | None = None
+
     # Review pipeline
     prompt_version: str = "v3"  # v3 scored significantly better than v1 (see README, eval/)
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text

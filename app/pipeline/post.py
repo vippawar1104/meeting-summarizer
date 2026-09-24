@@ -16,6 +16,9 @@ SEVERITY_LABEL = {
 }
 
 
+FINDING_MARKER_RE = re.compile(r"<!-- reviewly:finding:([0-9a-f]+) -->")
+
+
 def review_marker(head_sha: str) -> str:
     return f"<!-- reviewly:review:{head_sha} -->"
 
