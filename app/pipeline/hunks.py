@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 
 from app.github.diff import DiffLine, FileDiff, Hunk
@@ -12,10 +13,21 @@ class HunkGroup:
     valid_lines: set[int]
     added: int
     added_text: str = ""  # the raw text of added lines, used as the retrieval query
+    norm_text: str = ""  # formatting-insensitive form of the group, used as the cache key
 
     @property
     def chars(self) -> int:
         return len(self.text)
+
+
+_TOKEN = re.compile(r"\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\w+|[^\w\s]")
+
+
+def normalize_line(ln: DiffLine) -> str:
+    """Ignores spacing inside a line (so reformatting still matches) but never anything that
+    changes meaning: tokens, string contents, operators and the indentation itself are kept."""
+    indent = ln.content[: len(ln.content) - len(ln.content.lstrip())]
+    return f"{ln.new_no}|{ln.kind}|{indent!r}|" + " ".join(_TOKEN.findall(ln.content))
 
 
 def render_line(ln: DiffLine) -> str:
@@ -63,6 +75,7 @@ def group_file(f: FileDiff, max_chars: int) -> list[HunkGroup]:
                 valid_lines={ln.new_no for ln in all_lines if ln.new_no and ln.kind != "del"},
                 added=sum(1 for ln in all_lines if ln.kind == "add"),
                 added_text="\n".join(ln.content for ln in all_lines if ln.kind == "add"),
+                norm_text="\n".join(normalize_line(ln) for ln in all_lines),
             )
         )
         pending, pending_size = [], 0

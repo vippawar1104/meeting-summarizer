@@ -1,17 +1,20 @@
 import asyncio
 from dataclasses import dataclass, field
+from typing import Any
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
+from app.cost.cache import ReviewCache
+from app.cost.guard import BudgetExceeded, current_installation
 from app.db.models import FindingRow, Job
 from app.github.client import GitHubClient, GitHubNotFound, GitHubValidation
 from app.github.diff import parse_diff
-from app.llm.router import LLMRouter
+from app.llm.base import Completer
 from app.pipeline.config import RepoConfig, parse_repo_config
 from app.pipeline.filter import filter_files
-from app.pipeline.findings import Finding
+from app.pipeline.findings import Category, Finding, Severity, parse_findings
 from app.pipeline.hunks import HunkGroup, group_files, select_within_budget
 from app.pipeline.merge import MergeStats, merge_findings
 from app.pipeline.post import (
@@ -21,11 +24,18 @@ from app.pipeline.post import (
     fingerprint,
     has_review_marker,
 )
-from app.pipeline.prompts import load_system_prompt, render_user_prompt
+from app.pipeline.prompts import (
+    load_system_prompt,
+    render_context,
+    render_feedback,
+    render_user_prompt,
+)
 from app.pipeline.review_llm import GroupResult, review_group
 from app.queue.errors import PermanentError, SkipJob
 from app.rag.feedback import FeedbackContext, past_feedback
 from app.rag.retrieval import Retriever
+from app.safety.injection import InjectionSignal, detect, scan_diff
+from app.safety.redact import RedactionReport, redact_diff, redact_text
 
 log = structlog.get_logger()
 
@@ -42,8 +52,17 @@ class ReviewOutcome:
     parse_failures: int = 0
     repairs: int = 0
     context_chunks: int = 0
+    cache_hits: int = 0
+    groups_budget_skipped: int = 0
+    redactions: int = 0
+    hidden_chars: int = 0
+    injection_signals: int = 0
     partial: bool = False
     merge: MergeStats = field(default_factory=MergeStats)
+
+
+class _AllSkippedForBudget(Exception):
+    """Every section was refused because the installation's daily token budget is used up."""
 
 
 class ReviewPipeline:
@@ -52,13 +71,14 @@ class ReviewPipeline:
     def __init__(
         self,
         github: GitHubClient,
-        router: LLMRouter,
+        router: Completer,
         settings: Settings,
         sessionmaker: async_sessionmaker[AsyncSession],
         retriever: Retriever | None = None,
+        cache: ReviewCache | None = None,
     ) -> None:
         self._gh, self._router, self._s, self._sm = github, router, settings, sessionmaker
-        self._retriever = retriever
+        self._retriever, self._cache = retriever, cache
         if retriever is not None and settings.prompt_version == "v1":
             raise ValueError(
                 "repository context needs prompt v2 or later (v1 does not describe it)"
@@ -84,7 +104,32 @@ class ReviewPipeline:
             raise PermanentError(f"not found on GitHub: {exc}") from exc
         config, config_warning = parse_repo_config(raw_cfg)
 
+        token = current_installation.set(inst)  # LLM calls below are metered to this installation
+        try:
+            return await self._review(job, pr, diff_text, config, config_warning)
+        finally:
+            current_installation.reset(token)
+
+    async def _review(
+        self,
+        job: Job,
+        pr: dict[str, Any],
+        diff_text: str,
+        config: RepoConfig,
+        config_warning: str | None,
+    ) -> ReviewOutcome:
+        inst, repo, number = job.installation_id, job.repo_full_name, job.pr_number
+        title = pr.get("title") or ""
+
         parsed = parse_diff(diff_text)
+        # Scan for injection attempts on the raw text, then redact: nothing below (prompts, context
+        # lookups, the cache key) ever sees an unredacted secret or an invisible character.
+        signals = scan_diff(parsed)
+        title_labels = detect(title)
+        red = RedactionReport()
+        if self._s.redaction_enabled:
+            red = redact_diff(parsed)
+            title, _ = redact_text(title)
         kept = filter_files(parsed, config.ignore).kept
         if not kept:
             raise SkipJob("no reviewable files")
@@ -92,13 +137,23 @@ class ReviewPipeline:
         groups = group_files(kept, self._s.max_group_chars)
         chosen, dropped = select_within_budget(groups, self._s.max_review_chars)
 
-        out = ReviewOutcome(groups_total=len(chosen), partial=bool(dropped))
+        out = ReviewOutcome(
+            groups_total=len(chosen),
+            partial=bool(dropped),
+            redactions=red.total,
+            hidden_chars=red.hidden_chars,
+            injection_signals=len(signals) + len(title_labels) + (1 if red.hidden_chars else 0),
+        )
         changed_paths = {f.path for f in parsed} | {f.old_path for f in parsed if f.old_path}
         feedback = await self._feedback(job, changed_paths) if self._retriever else None
-        results = await self._review_all(
-            chosen, pr.get("title") or "", config, job, changed_paths, feedback
-        )
-        findings = self._collect(results, out)
+        results = await self._review_all(chosen, title, config, job, changed_paths, feedback)
+        try:
+            findings = self._collect(results, out)
+        except _AllSkippedForBudget:
+            await self._budget_notice(job)
+            raise SkipJob("daily token budget exhausted") from None
+        if self._s.injection_findings:
+            findings += self._injection_findings(signals)
 
         max_comments = config.max_comments or self._s.max_comments
         final, stats = merge_findings(
@@ -114,6 +169,10 @@ class ReviewPipeline:
             files_reviewed=len({g.path for g in chosen}),
             groups_total=out.groups_total,
             groups_failed=out.groups_failed,
+            budget_skipped=out.groups_budget_skipped,
+            redactions=out.redactions,
+            hidden_chars=out.hidden_chars,
+            title_flagged=bool(title_labels),
             skipped_for_size=sorted({g.path for g in dropped}),
             not_shown=stats.over_cap,
             config_warning=config_warning,
@@ -175,7 +234,24 @@ class ReviewPipeline:
                 user = render_user_prompt(
                     g, pr_title=title, rules=config.rules, context=context, feedback=feedback
                 )
+                key = None
+                if self._cache is not None:
+                    key = ReviewCache.key(
+                        self._s.prompt_version,
+                        self._system,
+                        g.norm_text or g.text,
+                        config.rules,
+                        render_context(context) if context else "",
+                        render_feedback(feedback) if feedback else "",
+                    )
+                    hit = await self._cache_get(job.installation_id, key)
+                    if hit is not None:
+                        cached = parse_findings(hit)
+                        if not cached.errors:
+                            return GroupResult(findings=cached.findings, cache_hit=True)
                 result = await review_group(self._router, self._system, user)
+                if key is not None and result.clean:
+                    await self._cache_put(job.installation_id, key, result.raw_text)
                 if extra is not None:
                     result.prompt_tokens += extra.prompt_tokens
                     result.completion_tokens += extra.completion_tokens
@@ -185,6 +261,58 @@ class ReviewPipeline:
 
         return list(await asyncio.gather(*(one(g) for g in groups), return_exceptions=True))
 
+    async def _cache_get(self, inst: int, key: str) -> str | None:
+        try:
+            assert self._cache is not None
+            return await self._cache.get(inst, key)
+        except Exception:
+            log.exception("cache_read_failed")  # a cache outage must never fail a review
+            return None
+
+    async def _cache_put(self, inst: int, key: str, response: str) -> None:
+        try:
+            assert self._cache is not None
+            await self._cache.put(inst, key, response)
+        except Exception:
+            log.exception("cache_write_failed")
+
+    async def _budget_notice(self, job: Job) -> None:
+        body = (
+            "**Reviewly** did not review this pull request: this installation's daily AI budget "
+            "has been used up. It resets at 00:00 UTC; push a new commit after that to get a "
+            f"review.\n\n<!-- reviewly:budget:{job.head_sha} -->"
+        )
+        try:
+            await self._gh.create_comment(
+                job.installation_id, job.repo_full_name, job.pr_number, body
+            )
+        except Exception:
+            log.exception("budget_notice_failed", job_id=job.id)
+
+    @staticmethod
+    def _injection_findings(signals: list[InjectionSignal]) -> list[Finding]:
+        """Make attempts to instruct the AI reviewer visible to humans (at most three)."""
+        by_line: dict[tuple[str, int], list[str]] = {}
+        for sig in signals:
+            if sig.file is not None and sig.line is not None:
+                by_line.setdefault((sig.file, sig.line), []).append(sig.label)
+        return [
+            Finding(
+                file=file,
+                line=line,
+                severity=Severity.LOW,
+                category=Category.SECURITY,
+                message=(
+                    "This line contains text that looks like an instruction to an AI code "
+                    f"reviewer ({', '.join(sorted(set(labels)))}). Reviewly treats code and "
+                    "comments as data and ignored it, but that is unusual in source code and "
+                    "worth a human look."
+                ),
+                confidence=0.9,
+            )
+            for (file, line), labels in list(by_line.items())[:3]
+        ]
+
     @staticmethod
     def _collect(results: list[GroupResult | BaseException], out: ReviewOutcome) -> list[Finding]:
         findings: list[Finding] = []
@@ -193,9 +321,13 @@ class ReviewPipeline:
             if isinstance(r, BaseException):
                 if isinstance(r, asyncio.CancelledError):
                     raise r
-                out.groups_failed += 1
-                errors.append(r)
+                if isinstance(r, BudgetExceeded):
+                    out.groups_budget_skipped += 1
+                else:
+                    out.groups_failed += 1
+                    errors.append(r)
                 continue
+            out.cache_hits += r.cache_hit
             findings += r.findings
             out.prompt_tokens += r.prompt_tokens
             out.completion_tokens += r.completion_tokens
@@ -203,9 +335,11 @@ class ReviewPipeline:
             out.repairs += r.repaired
             out.context_chunks += r.context_chunks
             out.parse_failures += r.parse_failed
-        if errors and out.groups_failed == out.groups_total:
-            # Every call failed (provider outage): raise so the job is retried, not "reviewed".
-            raise errors[0]
+        if out.groups_total and out.groups_failed + out.groups_budget_skipped == out.groups_total:
+            if errors:
+                # Every call failed (provider outage): raise so the job is retried, not "reviewed".
+                raise errors[0]
+            raise _AllSkippedForBudget
         return findings
 
     async def _persist(self, job: Job, out: ReviewOutcome) -> None:

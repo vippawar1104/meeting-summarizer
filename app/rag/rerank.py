@@ -4,8 +4,7 @@ from typing import Protocol
 
 import structlog
 
-from app.llm.base import LLMError, Message
-from app.llm.router import LLMRouter
+from app.llm.base import Completer, LLMError, Message
 from app.pipeline.sanitize import defang
 from app.rag.store import Hit
 
@@ -58,7 +57,7 @@ def parse_scores(text: str, n: int) -> dict[int, float] | None:
 class LLMReranker:
     """One listwise LLM call per review section. Any failure falls back to the fused order."""
 
-    def __init__(self, router: LLMRouter) -> None:
+    def __init__(self, router: Completer) -> None:
         self._router = router
 
     async def rerank(self, query: str, candidates: list[Hit]) -> RerankResult:

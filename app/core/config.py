@@ -59,6 +59,16 @@ class Settings(BaseSettings):
     context_chars: int = 6000
     rerank_enabled: bool = True
 
+    # Cost and abuse control
+    daily_token_budget: int = 500_000  # per installation per UTC day; 0 = unlimited
+    llm_rate_per_min: float = 120.0  # LLM calls per installation
+    llm_rate_burst: int = 20
+    llm_rate_max_wait_s: float = 5.0
+    cache_enabled: bool = True
+    cache_ttl_days: int = 7
+    redaction_enabled: bool = True
+    injection_findings: bool = True  # flag added lines that try to instruct the AI reviewer
+
     # Review pipeline
     prompt_version: str = "v1"
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text
