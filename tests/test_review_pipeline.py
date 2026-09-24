@@ -32,11 +32,12 @@ class FakeGitHub:
         self.diff, self.pr_state, self.head = diff, "open", "sha0"
         self.config, self.reviews, self.created, self.config_ref = kw.get("config"), [], [], None
         self.reject_inline, self.not_found = False, False
+        self.title, self.comments = "Fix add()", []
 
     async def get_pr(self, inst, repo, number):
         if self.not_found:
             raise GitHubNotFound("gone")
-        return {"state": self.pr_state, "title": "Fix add()", "head": {"sha": self.head},
+        return {"state": self.pr_state, "title": self.title, "head": {"sha": self.head},
                 "base": {"sha": "basesha"}}  # fmt: skip
 
     async def list_reviews(self, inst, repo, number):
@@ -49,6 +50,9 @@ class FakeGitHub:
         self.config_ref = ref
         return self.config
 
+    async def create_comment(self, inst, repo, number, body):
+        self.comments.append(body)
+
     async def create_review(self, inst, repo, number, payload):
         if self.reject_inline and payload.get("comments"):
             raise GitHubValidation("Line could not be resolved")
@@ -59,13 +63,14 @@ class FakeGitHub:
 class ScriptedRouter:
     def __init__(self, respond):
         self.respond, self.calls, self.providers = respond, [], []
+        self.tokens = (100, 20)  # (prompt, completion) usage reported for every call
 
     async def complete(self, messages, *, json_mode=True):
         self.calls.append(messages)
         out = self.respond(messages)
         if isinstance(out, Exception):
             raise out
-        return LLMResult(out, 100, 20, "fake", "m", 0.001)
+        return LLMResult(out, *self.tokens, "fake", "m", 0.001)
 
     def user_prompts(self):
         return [c[1].content for c in self.calls]
