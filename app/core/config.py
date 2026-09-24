@@ -25,6 +25,30 @@ class Settings(BaseSettings):
     reconcile_interval_s: float = 30.0
     reconcile_grace_s: float = 60.0  # only re-enqueue jobs untouched for this long
     shutdown_grace_s: float = 25.0
+
+    # GitHub App
+    github_api_url: str = "https://api.github.com"
+    github_app_id: str | None = None
+    github_private_key: str | None = None  # PEM contents
+
+    # LLM providers (comma-separated order; providers without a key are skipped)
+    provider_order: str = "gemini,groq,mistral"
+    gemini_api_key: str | None = None
+    groq_api_key: str | None = None
+    mistral_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
+    groq_model: str = "llama-3.3-70b-versatile"
+    mistral_model: str = "mistral-large-latest"
+    llm_timeout_s: float = 60.0
+    breaker_threshold: int = 3
+    breaker_cooldown_s: float = 30.0
+
+    # Review pipeline
+    prompt_version: str = "v1"
+    max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text
+    max_review_chars: int = 120_000  # beyond this the review is partial
+    review_concurrency: int = 4
+    max_comments: int = 25
     log_level: str = "INFO"
 
 

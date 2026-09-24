@@ -14,7 +14,7 @@ make up        # docker compose: postgres+pgvector, redis, migrate, api, worker
 ## Status
 - [x] M1 skeleton: webhook verify, dedupe, idempotent enqueue, migrations, CI config
 - [x] M2 worker + queue semantics: fair scheduler, per-installation cap, small-PR priority, retry/backoff+jitter, DLQ, visibility timeout, graceful shutdown, Postgres reconciler
-- [ ] M3 diff parsing + LLM review
+- [x] M3 diff parsing, LLM review, structured output, line verification (verified with fakes and fixtures; not yet run against live Gemini/GitHub)
 - [ ] M4 RAG
 - [ ] M5 cost controls + safety
 - [ ] M6 eval harness

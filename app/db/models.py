@@ -48,7 +48,32 @@ class Job(SQLModel, table=True):
     )
     attempts: int = 0
     last_error: str | None = None
+    review_id: int | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
     delivery_id: str
     correlation_id: str
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
+
+
+class FindingRow(SQLModel, table=True):
+    """A finding that was posted to GitHub. Feeds the feedback loop and the dashboard."""
+
+    __tablename__ = "findings"
+
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+    job_id: str = Field(index=True)
+    installation_id: int = Field(index=True)
+    repo_full_name: str = Field(index=True)
+    pr_number: int
+    file: str
+    line: int
+    severity: str
+    category: str
+    message: str
+    suggested_patch: str | None = None
+    confidence: float
+    fingerprint: str = Field(index=True)  # stable id for "the same finding", used to suppress FPs
+    created_at: datetime = Field(default_factory=_now)

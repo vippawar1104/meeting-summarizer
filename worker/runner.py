@@ -8,16 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import Settings
 from app.core.logging import correlation_id
 from app.db.models import Job, JobStatus, _now
+from app.queue.errors import PermanentError, SkipJob
 from app.queue.redis_queue import Claimed, RedisJobQueue
 from app.queue.retry import backoff_seconds
 
 log = structlog.get_logger()
 
+__all__ = ["PermanentError", "SkipJob", "Worker"]
+
 Handler = Callable[[Job], Awaitable[None]]
-
-
-class PermanentError(Exception):
-    """Do not retry: the job can never succeed (e.g. the PR was deleted)."""
 
 
 class Worker:
@@ -95,6 +94,8 @@ class Worker:
         except asyncio.CancelledError:
             await asyncio.shield(self._release(job))
             raise
+        except SkipJob as exc:
+            await self._finish(job, note=f"skipped: {exc}")
         except PermanentError as exc:
             await self._fail(job, exc, permanent=True)
         except Exception as exc:
@@ -124,8 +125,8 @@ class Worker:
             await asyncio.sleep(interval)
             await self._q.extend(job_id, self._s.visibility_timeout_s * 1000)
 
-    async def _finish(self, job: Job) -> None:
-        await self._set(job.id, JobStatus.DONE, error=None)
+    async def _finish(self, job: Job, note: str | None = None) -> None:
+        await self._set(job.id, JobStatus.DONE, error=note)
         await self._q.ack(job.id)
         log.info("job_done", job_id=job.id, attempts=job.attempts)
 
