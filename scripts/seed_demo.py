@@ -10,7 +10,8 @@ import asyncio
 import random
 from datetime import UTC, datetime, timedelta
 
-from sqlmodel import SQLModel
+from sqlalchemy import delete, select
+from sqlmodel import SQLModel, col
 
 from app.core.config import get_settings
 from app.db.models import FindingRow, Job, JobStatus, UsageRow
@@ -33,11 +34,11 @@ MESSAGES = {
 }
 
 
-async def seed(installation: int) -> None:
+async def seed(installation: int, database_url: str | None = None) -> None:
     settings = get_settings()
     if settings.env != "dev":
         raise SystemExit("refusing to seed: REVIEWLY_ENV is not 'dev'")
-    engine = make_engine(settings.database_url)
+    engine = make_engine(database_url or settings.database_url)
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     sm = make_sessionmaker(engine)
@@ -45,6 +46,17 @@ async def seed(installation: int) -> None:
     now = datetime.now(UTC)
 
     async with sm() as s:
+        # Re-running must be safe: remove what an earlier run created (demo rows only), then re-create.
+        old = select(col(Job.id)).where(
+            col(Job.installation_id) == installation, col(Job.delivery_id) == "demo"
+        )
+        await s.execute(delete(FindingRow).where(col(FindingRow.job_id).in_(old)))
+        await s.execute(
+            delete(Job).where(
+                col(Job.installation_id) == installation, col(Job.delivery_id) == "demo"
+            )
+        )
+        await s.execute(delete(UsageRow).where(col(UsageRow.installation_id) == installation))
         for i in range(14):
             repo, pr = REPOS[i % 3], 10 + i
             status = JobStatus.DEAD if i == 5 else JobStatus.DONE
