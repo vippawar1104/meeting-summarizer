@@ -94,6 +94,25 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
 
+PLACEHOLDER_SECRETS = {"dev-secret", "dev-dashboard-secret-change-me"}
+
+
+def insecure_settings(settings: Settings) -> list[str]:
+    """Problems that must stop the app from starting anywhere but a developer's laptop."""
+    if settings.env == "dev":
+        return []
+    problems = []
+    if settings.github_webhook_secret in PLACEHOLDER_SECRETS:
+        problems.append("REVIEWLY_GITHUB_WEBHOOK_SECRET is still the placeholder")
+    if settings.dashboard_secret in PLACEHOLDER_SECRETS or len(settings.dashboard_secret) < 32:
+        problems.append(
+            "REVIEWLY_DASHBOARD_SECRET must be a random string of at least 32 characters"
+        )
+    if settings.dashboard_dev_login:
+        problems.append("REVIEWLY_DASHBOARD_DEV_LOGIN must not be enabled outside dev")
+    return problems
+
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

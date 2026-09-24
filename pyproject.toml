@@ -46,6 +46,9 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B", "ASYNC"]
 ignore = ["E501"]  # `ruff format` owns layout; long f-strings are fine
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
