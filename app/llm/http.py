@@ -28,6 +28,10 @@ def raise_for_status(resp: httpx.Response, provider: str) -> None:
         except ValueError:
             retry_after = _retry_delay_from_body(resp)
         raise RateLimited(detail, retry_after)
+    if code == 400 and "json_validate_failed" in resp.text:
+        # The model produced malformed JSON in JSON mode and the provider rejected it before we saw
+        # it. That is sampling noise, not a bad request: retrying or another provider usually works.
+        raise ProviderUnavailable(f"{provider} model produced invalid JSON (retryable)")
     if code in (401, 403, 408) or code >= 500:
         # 401/403 = bad or revoked key: unusable until fixed, so treat like an outage.
         raise ProviderUnavailable(detail)

@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     injection_findings: bool = True  # flag added lines that try to instruct the AI reviewer
 
     # Review pipeline
-    prompt_version: str = "v1"
+    prompt_version: str = "v3"  # v3 scored significantly better than v1 (see README, eval/)
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text
     max_review_chars: int = 120_000  # beyond this the review is partial
     review_concurrency: int = 4

@@ -35,7 +35,10 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("google_api_key", re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b")),
     ("anthropic_or_openai_key", re.compile(r"\bsk-(?:ant-|proj-)?[A-Za-z0-9_\-]{32,}\b")),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}")),
-    ("url_credentials", re.compile(r"(?<=://)(?!\[REDACTED:)[^\s/:@'\"]+:[^\s/@'\"]+(?=@)")),
+    (
+        "url_credentials",
+        re.compile(r"(?<=://)(?!\[REDACTED:)[^\s/:@'\"{}<>]+:[^\s/@'\"{}<>]+(?=@)"),
+    ),
     ("bearer_token", re.compile(r"(?i)(?<=\bbearer )[A-Za-z0-9._~+/=-]{20,}")),
     ("key_material", re.compile(r"^\s*[A-Za-z0-9+/]{60,}={0,2}\s*$")),
 ]
