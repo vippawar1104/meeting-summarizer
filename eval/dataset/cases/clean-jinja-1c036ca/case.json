@@ -1,0 +1,17 @@
+{
+  "id": "clean-jinja-1c036ca",
+  "kind": "clean",
+  "language": "python",
+  "title": "add items filter",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/jinja",
+    "license": "BSD-3-Clause",
+    "commit": "1c036cac2fe61486e3bb1cc27474bf3e09ee0cd4",
+    "url": "https://github.com/pallets/jinja/commit/1c036cac2fe61486e3bb1cc27474bf3e09ee0cd4",
+    "original_subject": "add items filter",
+    "date": "2022-01-01",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "clean-httpx-7335950",
+  "kind": "clean",
+  "language": "python",
+  "title": "Add `socket_options` argument to `httpx.HTTPTransport` class (#2716)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "encode/httpx",
+    "license": "BSD-3-Clause",
+    "commit": "733595037ac26d272f74ee6d702150b017913d11",
+    "url": "https://github.com/encode/httpx/commit/733595037ac26d272f74ee6d702150b017913d11",
+    "original_subject": "Add `socket_options` argument to `httpx.HTTPTransport` class (#2716)",
+    "date": "2023-05-24",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "bug-werkzeug-a7ee5b1",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update routing.py",
+  "labels": [
+    {
+      "file": "src/werkzeug/routing.py",
+      "start": 341,
+      "end": 341,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/werkzeug",
+    "license": "BSD-3-Clause",
+    "commit": "a7ee5b10bb7a05d1859e735d7d5e96be7279285d",
+    "url": "https://github.com/pallets/werkzeug/commit/a7ee5b10bb7a05d1859e735d7d5e96be7279285d",
+    "original_subject": "Fix potential None access",
+    "date": "2021-05-13",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,16 @@
+diff --git a/httpx/_models.py b/httpx/_models.py
+--- a/httpx/_models.py
++++ b/httpx/_models.py
+@@ -964,10 +964,8 @@ class Headers(typing.MutableMapping[str, str]):
+ 
+     def update(self, headers: HeaderTypes = None) -> None:  # type: ignore
+         headers = Headers(headers)
+-        for key in headers.keys():
+-            if key in self:
+-                self.pop(key)
+-        self._list.extend(headers._list)
++        for key, value in headers.raw:
++            self[key.decode(headers.encoding)] = value.decode(headers.encoding)
+ 
+     def copy(self) -> "Headers":
+         return Headers(self, encoding=self.encoding)

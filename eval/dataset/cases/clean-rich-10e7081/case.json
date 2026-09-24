@@ -1,0 +1,17 @@
+{
+  "id": "clean-rich-10e7081",
+  "kind": "clean",
+  "language": "python",
+  "title": "Add new column object: IterationSpeedColumn",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "Textualize/rich",
+    "license": "MIT",
+    "commit": "10e7081f9bc94b06aed10666eb1f9f27ab6ca9f3",
+    "url": "https://github.com/Textualize/rich/commit/10e7081f9bc94b06aed10666eb1f9f27ab6ca9f3",
+    "original_subject": "Add new column object: IterationSpeedColumn",
+    "date": "2024-04-16",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

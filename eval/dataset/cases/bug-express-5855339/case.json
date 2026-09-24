@@ -1,0 +1,24 @@
+{
+  "id": "bug-express-5855339",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update response.js",
+  "labels": [
+    {
+      "file": "lib/response.js",
+      "start": 871,
+      "end": 873,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "5855339455a7f60774bef4166829e742a5056fa8",
+    "url": "https://github.com/expressjs/express/commit/5855339455a7f60774bef4166829e742a5056fa8",
+    "original_subject": "Fix behavior of null/undefined as \"maxAge\" in res.cookie",
+    "date": "2019-04-18",
+    "technique": "reversed fix commit"
+  }
+}

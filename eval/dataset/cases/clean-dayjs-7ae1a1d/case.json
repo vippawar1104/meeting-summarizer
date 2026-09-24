@@ -1,0 +1,17 @@
+{
+  "id": "clean-dayjs-7ae1a1d",
+  "kind": "clean",
+  "language": "javascript",
+  "title": "refactor: move declaration for english 'ordinal' to 'en' locale file (#2071)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "iamkun/dayjs",
+    "license": "MIT",
+    "commit": "7ae1a1d8bdb076c1467f1ef8f1abfff6eca32345",
+    "url": "https://github.com/iamkun/dayjs/commit/7ae1a1d8bdb076c1467f1ef8f1abfff6eca32345",
+    "original_subject": "refactor: move declaration for english 'ordinal' to 'en' locale file (#2071)",
+    "date": "2022-10-09",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

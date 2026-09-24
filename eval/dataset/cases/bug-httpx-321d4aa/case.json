@@ -1,0 +1,24 @@
+{
+  "id": "bug-httpx-321d4aa",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update _models.py",
+  "labels": [
+    {
+      "file": "httpx/_models.py",
+      "start": 967,
+      "end": 968,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "encode/httpx",
+    "license": "BSD-3-Clause",
+    "commit": "321d4aa5097fe7f24cdfed7191c44de589294780",
+    "url": "https://github.com/encode/httpx/commit/321d4aa5097fe7f24cdfed7191c44de589294780",
+    "original_subject": "Fix Headers.update to correctly handle repeated headers (#2038)",
+    "date": "2022-01-21",
+    "technique": "reversed fix commit"
+  }
+}

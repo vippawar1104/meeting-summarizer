@@ -1,0 +1,24 @@
+{
+  "id": "bug-attrs-1481227",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update _make.py",
+  "labels": [
+    {
+      "file": "src/attr/_make.py",
+      "start": 703,
+      "end": 711,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "python-attrs/attrs",
+    "license": "MIT",
+    "commit": "1481227583f2cf1566dc2836d3861ffe092b8e33",
+    "url": "https://github.com/python-attrs/attrs/commit/1481227583f2cf1566dc2836d3861ffe092b8e33",
+    "original_subject": "Fix post init hook not being called if validators are disabled (#129) (#130)",
+    "date": "2017-01-06",
+    "technique": "reversed fix commit"
+  }
+}

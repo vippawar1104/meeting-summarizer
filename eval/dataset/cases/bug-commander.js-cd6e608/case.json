@@ -1,0 +1,30 @@
+{
+  "id": "bug-commander.js-cd6e608",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update index.js",
+  "labels": [
+    {
+      "file": "index.js",
+      "start": 1119,
+      "end": 1121,
+      "note": ""
+    },
+    {
+      "file": "index.js",
+      "start": 1123,
+      "end": 1123,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "tj/commander.js",
+    "license": "MIT",
+    "commit": "cd6e6085c426fcc8815bac8247bc86a4757caa0b",
+    "url": "https://github.com/tj/commander.js/commit/cd6e6085c426fcc8815bac8247bc86a4757caa0b",
+    "original_subject": "Fix order of nested parent commands in help",
+    "date": "2019-06-23",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "bug-werkzeug-884437a",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update map.py",
+  "labels": [
+    {
+      "file": "src/werkzeug/routing/map.py",
+      "start": 963,
+      "end": 969,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/werkzeug",
+    "license": "BSD-3-Clause",
+    "commit": "884437aef93e543ebaff3b9cdbe857ee47e7e00c",
+    "url": "https://github.com/pallets/werkzeug/commit/884437aef93e543ebaff3b9cdbe857ee47e7e00c",
+    "original_subject": "fix boolean logic for external url",
+    "date": "2026-07-29",
+    "technique": "reversed fix commit"
+  }
+}

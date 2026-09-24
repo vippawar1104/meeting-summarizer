@@ -1,0 +1,30 @@
+{
+  "id": "bug-commander.js-994d24d",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update index.js",
+  "labels": [
+    {
+      "file": "index.js",
+      "start": 530,
+      "end": 531,
+      "note": ""
+    },
+    {
+      "file": "index.js",
+      "start": 533,
+      "end": 537,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "tj/commander.js",
+    "license": "MIT",
+    "commit": "994d24ddad4c1139d1ea3d5f94286f6d79b61f99",
+    "url": "https://github.com/tj/commander.js/commit/994d24ddad4c1139d1ea3d5f94286f6d79b61f99",
+    "original_subject": "fix: resolve symbol links until their are no more symbolic links",
+    "date": "2019-03-21",
+    "technique": "reversed fix commit"
+  }
+}

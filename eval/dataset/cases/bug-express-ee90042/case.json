@@ -1,0 +1,24 @@
+{
+  "id": "bug-express-ee90042",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update index.js",
+  "labels": [
+    {
+      "file": "lib/router/index.js",
+      "start": 581,
+      "end": 583,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "ee90042d0c4a32a426842e4c1ad5b24b5c0344ac",
+    "url": "https://github.com/expressjs/express/commit/ee90042d0c4a32a426842e4c1ad5b24b5c0344ac",
+    "original_subject": "Fix infinite loop condition using mergeParams: true",
+    "date": "2015-08-03",
+    "technique": "reversed fix commit"
+  }
+}

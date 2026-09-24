@@ -1,0 +1,49 @@
+diff --git a/cobra.go b/cobra.go
+--- a/cobra.go
++++ b/cobra.go
+@@ -40,6 +40,7 @@ var templateFuncs = template.FuncMap{
+ }
+ 
+ var initializers []func()
++var finalizers []func()
+ 
+ const (
+ 	defaultPrefixMatching  = false
+@@ -94,6 +95,12 @@ func OnInitialize(y ...func()) {
+ 	initializers = append(initializers, y...)
+ }
+ 
++// OnFinalize sets the passed functions to be run when each command's
++// Execute method is terminated.
++func OnFinalize(y ...func()) {
++	finalizers = append(finalizers, y...)
++}
++
+ // FIXME Gt is unused by cobra and should be removed in a version 2. It exists only for compatibility with users of cobra.
+ 
+ // Gt takes two types and checks whether the first type is greater than the second. In case of types Arrays, Chans,
+diff --git a/command.go b/command.go
+--- a/command.go
++++ b/command.go
+@@ -834,6 +834,8 @@ func (c *Command) execute(a []string) (err error) {
+ 
+ 	c.preRun()
+ 
++	defer c.postRun()
++
+ 	argWoFlags := c.Flags().Args()
+ 	if c.DisableFlagParsing {
+ 		argWoFlags = a
+@@ -904,6 +906,12 @@ func (c *Command) preRun() {
+ 	}
+ }
+ 
++func (c *Command) postRun() {
++	for _, x := range finalizers {
++		x()
++	}
++}
++
+ // ExecuteContext is the same as Execute(), but sets the ctx on the command.
+ // Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
+ // functions.

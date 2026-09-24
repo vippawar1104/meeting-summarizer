@@ -1,0 +1,22 @@
+diff --git a/src/marshmallow/fields.py b/src/marshmallow/fields.py
+--- a/src/marshmallow/fields.py
++++ b/src/marshmallow/fields.py
+@@ -1112,14 +1112,10 @@ class Boolean(Field):
+     def _serialize(self, value, attr, obj, **kwargs):
+         if value is None:
+             return None
+-
+-        try:
+-            if value in self.truthy:
+-                return True
+-            elif value in self.falsy:
+-                return False
+-        except TypeError:
+-            pass
++        elif value in self.truthy:
++            return True
++        elif value in self.falsy:
++            return False
+ 
+         return bool(value)
+ 

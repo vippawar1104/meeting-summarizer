@@ -1,0 +1,20 @@
+diff --git a/index.js b/index.js
+--- a/index.js
++++ b/index.js
+@@ -1116,12 +1116,11 @@ Command.prototype.helpInformation = function() {
+   if (this._alias) {
+     cmdName = cmdName + '|' + this._alias;
+   }
+-  var parentCmdNames = '';
+-  for (var parentCmd = this.parent; parentCmd; parentCmd = parentCmd.parent) {
+-    parentCmdNames = parentCmd.name() + ' ' + parentCmdNames;
+-  }
++  var ancestor = this;
++  var prefix = [];
++  while ((ancestor = ancestor.parent)) prefix.push(ancestor.name() + ' ');
+   var usage = [
+-    'Usage: ' + parentCmdNames + cmdName + ' ' + this.usage(),
++    'Usage: ' + prefix.join('') + cmdName + ' ' + this.usage(),
+     ''
+   ];
+ 

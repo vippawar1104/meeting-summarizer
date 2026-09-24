@@ -1,0 +1,42 @@
+{
+  "id": "bug-jinja-05dee9b",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update compiler.py",
+  "labels": [
+    {
+      "file": "src/jinja2/compiler.py",
+      "start": 1644,
+      "end": 1644,
+      "note": ""
+    },
+    {
+      "file": "src/jinja2/compiler.py",
+      "start": 1651,
+      "end": 1651,
+      "note": ""
+    },
+    {
+      "file": "src/jinja2/compiler.py",
+      "start": 1663,
+      "end": 1663,
+      "note": ""
+    },
+    {
+      "file": "src/jinja2/compiler.py",
+      "start": 1672,
+      "end": 1672,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/jinja",
+    "license": "BSD-3-Clause",
+    "commit": "05dee9b87023930f8131cbc0815b56a23e973c3d",
+    "url": "https://github.com/pallets/jinja/commit/05dee9b87023930f8131cbc0815b56a23e973c3d",
+    "original_subject": "Fix attribute access in async code. Fixes #1141",
+    "date": "2020-01-30",
+    "technique": "reversed fix commit"
+  }
+}

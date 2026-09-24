@@ -1,0 +1,24 @@
+{
+  "id": "bug-rich-5100a2b",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update __init__.py",
+  "labels": [
+    {
+      "file": "rich/__init__.py",
+      "start": 16,
+      "end": 16,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "Textualize/rich",
+    "license": "MIT",
+    "commit": "5100a2be526a3ef517cd25676b055bf6c06f12b9",
+    "url": "https://github.com/Textualize/rich/commit/5100a2be526a3ef517cd25676b055bf6c06f12b9",
+    "original_subject": "fix import cwd if no cwd",
+    "date": "2022-04-22",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "clean-cobra-93d1913",
+  "kind": "clean",
+  "language": "go",
+  "title": "Add OnFinalize method (#1788)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "spf13/cobra",
+    "license": "Apache-2.0",
+    "commit": "93d1913fb03362f97e95aeacc7d1541764cafc2f",
+    "url": "https://github.com/spf13/cobra/commit/93d1913fb03362f97e95aeacc7d1541764cafc2f",
+    "original_subject": "Add OnFinalize method (#1788)",
+    "date": "2022-10-03",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

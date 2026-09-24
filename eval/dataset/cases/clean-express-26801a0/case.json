@@ -1,0 +1,17 @@
+{
+  "id": "clean-express-26801a0",
+  "kind": "clean",
+  "language": "javascript",
+  "title": "Use object with null prototype for settings closes #4835",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "26801a0afdd73258ee3c3685e30d5d4040c1558d",
+    "url": "https://github.com/expressjs/express/commit/26801a0afdd73258ee3c3685e30d5d4040c1558d",
+    "original_subject": "Use object with null prototype for settings closes #4835",
+    "date": "2022-02-21",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

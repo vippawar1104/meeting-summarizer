@@ -1,0 +1,30 @@
+{
+  "id": "bug-jinja-964c61c",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update bccache.py",
+  "labels": [
+    {
+      "file": "jinja2/bccache.py",
+      "start": 218,
+      "end": 218,
+      "note": ""
+    },
+    {
+      "file": "jinja2/bccache.py",
+      "start": 227,
+      "end": 228,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/jinja",
+    "license": "BSD-3-Clause",
+    "commit": "964c61ce79f6748ff8c583e2eb12ec54082bf188",
+    "url": "https://github.com/pallets/jinja/commit/964c61ce79f6748ff8c583e2eb12ec54082bf188",
+    "original_subject": "Fix CVE-2014-0012",
+    "date": "2014-02-09",
+    "technique": "reversed fix commit"
+  }
+}

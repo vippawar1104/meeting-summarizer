@@ -1,0 +1,36 @@
+{
+  "id": "bug-attrs-09161fc",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update _make.py",
+  "labels": [
+    {
+      "file": "src/attr/_make.py",
+      "start": 2210,
+      "end": 2210,
+      "note": ""
+    },
+    {
+      "file": "src/attr/_make.py",
+      "start": 2212,
+      "end": 2214,
+      "note": ""
+    },
+    {
+      "file": "src/attr/_make.py",
+      "start": 2218,
+      "end": 2218,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "python-attrs/attrs",
+    "license": "MIT",
+    "commit": "09161fc9181bf94aa3bbc5509c663d736a9553dc",
+    "url": "https://github.com/python-attrs/attrs/commit/09161fc9181bf94aa3bbc5509c663d736a9553dc",
+    "original_subject": "Fix crash when __pre_init__, kw_only, and defaults come together (#1319)",
+    "date": "2024-08-03",
+    "technique": "reversed fix commit"
+  }
+}

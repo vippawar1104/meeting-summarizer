@@ -1,0 +1,36 @@
+{
+  "id": "bug-marshmallow-65374df",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update validate.py",
+  "labels": [
+    {
+      "file": "src/marshmallow/validate.py",
+      "start": 8,
+      "end": 8,
+      "note": ""
+    },
+    {
+      "file": "src/marshmallow/validate.py",
+      "start": 629,
+      "end": 629,
+      "note": ""
+    },
+    {
+      "file": "src/marshmallow/validate.py",
+      "start": 631,
+      "end": 631,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "marshmallow-code/marshmallow",
+    "license": "MIT",
+    "commit": "65374df0c31cdc45acc4435741779298201306a2",
+    "url": "https://github.com/marshmallow-code/marshmallow/commit/65374df0c31cdc45acc4435741779298201306a2",
+    "original_subject": "Fix OneOf.options() emitting phantom entries when labels outnumber choices (#2909)",
+    "date": "2026-03-25",
+    "technique": "reversed fix commit"
+  }
+}

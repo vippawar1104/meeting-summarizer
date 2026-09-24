@@ -1,0 +1,23 @@
+diff --git a/httpx/client.py b/httpx/client.py
+--- a/httpx/client.py
++++ b/httpx/client.py
+@@ -622,8 +622,7 @@ class Client(BaseClient):
+             if not response.is_redirect:
+                 return response
+ 
+-            if allow_redirects:
+-                response.read()
++            response.read()
+             request = self.build_redirect_request(request, response)
+             history = history + [response]
+ 
+@@ -1147,8 +1146,7 @@ class AsyncClient(BaseClient):
+             if not response.is_redirect:
+                 return response
+ 
+-            if allow_redirects:
+-                await response.aread()
++            await response.aread()
+             request = self.build_redirect_request(request, response)
+             history = history + [response]
+ 

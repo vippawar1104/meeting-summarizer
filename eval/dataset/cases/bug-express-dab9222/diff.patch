@@ -1,0 +1,32 @@
+diff --git a/lib/router/index.js b/lib/router/index.js
+--- a/lib/router/index.js
++++ b/lib/router/index.js
+@@ -152,7 +152,9 @@ proto.handle = function(req, res, done) {
+   if (req.method === 'OPTIONS') {
+     done = wrap(done, function(old, err) {
+       if (err || options.length === 0) return old(err);
+-      sendOptionsResponse(res, options, old);
++
++      var body = options.join(',');
++      return res.set('Allow', body).send(body);
+     });
+   }
+ 
+@@ -569,17 +571,6 @@ function restore(fn, obj) {
+   };
+ }
+ 
+-// send an OPTIONS response
+-function sendOptionsResponse(res, options, next) {
+-  try {
+-    var body = options.join(',');
+-    res.set('Allow', body);
+-    res.send(body);
+-  } catch (err) {
+-    next(err);
+-  }
+-}
+-
+ // wrap a function
+ function wrap(old, fn) {
+   return function proxy() {

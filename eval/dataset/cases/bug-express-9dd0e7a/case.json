@@ -1,0 +1,24 @@
+{
+  "id": "bug-express-9dd0e7a",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update response.js",
+  "labels": [
+    {
+      "file": "lib/response.js",
+      "start": 325,
+      "end": 328,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "9dd0e7afdb6d022e18add1e009c4e3a66258c1fa",
+    "url": "https://github.com/expressjs/express/commit/9dd0e7afdb6d022e18add1e009c4e3a66258c1fa",
+    "original_subject": "Fix handling of undefined in res.jsonp",
+    "date": "2021-11-16",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "clean-jinja-76af711",
+  "kind": "clean",
+  "language": "python",
+  "title": "make unique filter async-aware",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/jinja",
+    "license": "BSD-3-Clause",
+    "commit": "76af7110ead6083e75072f9e76242c9ce79b76ed",
+    "url": "https://github.com/pallets/jinja/commit/76af7110ead6083e75072f9e76242c9ce79b76ed",
+    "original_subject": "make unique filter async-aware",
+    "date": "2022-12-23",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

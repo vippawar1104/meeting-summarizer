@@ -43,6 +43,7 @@ log = structlog.get_logger()
 @dataclass
 class ReviewOutcome:
     posted: list[Finding] = field(default_factory=list)
+    raw_findings: list[Finding] = field(default_factory=list)  # model output before verification
     review_id: int | None = None
     prompt_tokens: int = 0
     completion_tokens: int = 0
@@ -152,6 +153,7 @@ class ReviewPipeline:
         except _AllSkippedForBudget:
             await self._budget_notice(job)
             raise SkipJob("daily token budget exhausted") from None
+        out.raw_findings = list(findings)
         if self._s.injection_findings:
             findings += self._injection_findings(signals)
 

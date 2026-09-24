@@ -50,7 +50,7 @@ ignore = ["E501"]  # `ruff format` owns layout; long f-strings are fine
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["app", "worker"]
+files = ["app", "worker", "eval"]
 
 [[tool.mypy.overrides]]
 module = ["sqlmodel.*", "fakeredis.*"]

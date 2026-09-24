@@ -1,0 +1,24 @@
+{
+  "id": "bug-axios-227c788",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update http.js",
+  "labels": [
+    {
+      "file": "lib/adapters/http.js",
+      "start": 1208,
+      "end": 1208,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "axios/axios",
+    "license": "MIT",
+    "commit": "227c788eb702ee88791451eb53e76ef3dca67f8a",
+    "url": "https://github.com/axios/axios/commit/227c788eb702ee88791451eb53e76ef3dca67f8a",
+    "original_subject": "fix(http): guard socket.setKeepAlive for proxy agent streams (#10917)",
+    "date": "2026-06-15",
+    "technique": "reversed fix commit"
+  }
+}

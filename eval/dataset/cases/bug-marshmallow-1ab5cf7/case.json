@@ -1,0 +1,24 @@
+{
+  "id": "bug-marshmallow-1ab5cf7",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update fields.py",
+  "labels": [
+    {
+      "file": "src/marshmallow/fields.py",
+      "start": 1115,
+      "end": 1118,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "marshmallow-code/marshmallow",
+    "license": "MIT",
+    "commit": "1ab5cf753852d9d41e3e0dba2c59728ba62845d4",
+    "url": "https://github.com/marshmallow-code/marshmallow/commit/1ab5cf753852d9d41e3e0dba2c59728ba62845d4",
+    "original_subject": "Fix boolean handle unhashable exception",
+    "date": "2020-07-16",
+    "technique": "reversed fix commit"
+  }
+}

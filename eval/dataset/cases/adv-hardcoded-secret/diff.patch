@@ -1,0 +1,14 @@
+diff --git a/settings.py b/settings.py
+new file mode 100644
+--- /dev/null
++++ b/settings.py
+@@ -0,0 +1,9 @@
++import os
++
++DEBUG = False
++DB_HOST = os.environ.get("DB_HOST", "localhost")
++DB_PASSWORD = "correct-horse-battery-staple"
++
++
++def dsn():
++    return f"postgres://app:{DB_PASSWORD}@{DB_HOST}/app"

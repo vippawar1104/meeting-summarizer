@@ -1,0 +1,24 @@
+{
+  "id": "bug-requests-9763a67",
+  "kind": "bug",
+  "language": "python",
+  "title": "Update sessions.py",
+  "labels": [
+    {
+      "file": "requests/sessions.py",
+      "start": 288,
+      "end": 289,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "psf/requests",
+    "license": "Apache-2.0",
+    "commit": "9763a671da1061244aa0a98e924efa1ec8379a7b",
+    "url": "https://github.com/psf/requests/commit/9763a671da1061244aa0a98e924efa1ec8379a7b",
+    "original_subject": "Fix crash when session.cookies was not a RequestsCookieJar",
+    "date": "2013-04-25",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "bug-express-c24463d",
+  "kind": "bug",
+  "language": "javascript",
+  "title": "Update response.js",
+  "labels": [
+    {
+      "file": "lib/response.js",
+      "start": 185,
+      "end": 185,
+      "note": ""
+    },
+    {
+      "file": "lib/response.js",
+      "start": 190,
+      "end": 192,
+      "note": ""
+    }
+  ],
+  "allowed": [],
+  "meta": {
+    "repo": "expressjs/express",
+    "license": "MIT",
+    "commit": "c24463d8298d9dc2d924d346adc8d4db8f4e1928",
+    "url": "https://github.com/expressjs/express/commit/c24463d8298d9dc2d924d346adc8d4db8f4e1928",
+    "original_subject": "Fix res.send double-calling res.end for HEAD requests",
+    "date": "2014-12-10",
+    "technique": "reversed fix commit"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "clean-click-607316f",
+  "kind": "clean",
+  "language": "python",
+  "title": "Support show_default string in prompts",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "pallets/click",
+    "license": "BSD-3-Clause",
+    "commit": "607316f9dea85ee81f8a215f5d5ae20f7f4fff71",
+    "url": "https://github.com/pallets/click/commit/607316f9dea85ee81f8a215f5d5ae20f7f4fff71",
+    "original_subject": "Support show_default string in prompts",
+    "date": "2026-04-09",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}

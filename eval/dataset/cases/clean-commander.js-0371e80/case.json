@@ -1,0 +1,17 @@
+{
+  "id": "clean-commander.js-0371e80",
+  "kind": "clean",
+  "language": "javascript",
+  "title": "add parseArg to Argument class (#2359)",
+  "labels": [],
+  "allowed": [],
+  "meta": {
+    "repo": "tj/commander.js",
+    "license": "MIT",
+    "commit": "0371e8045f9549dec2519fab171aa69cd3dc7451",
+    "url": "https://github.com/tj/commander.js/commit/0371e8045f9549dec2519fab171aa69cd3dc7451",
+    "original_subject": "add parseArg to Argument class (#2359)",
+    "date": "2025-04-28",
+    "technique": "merged commit, no later fix or revert references it"
+  }
+}
