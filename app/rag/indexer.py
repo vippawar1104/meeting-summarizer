@@ -112,10 +112,10 @@ class RepoIndexer:
             if e.get("type") != "blob":
                 continue
             path = e["path"]
-            if not _indexable(path):
+            if (reason := path_skip_reason(path, [])) is not None:
+                report.skip(reason)  # most specific reason first: lock file, binary, vendored...
+            elif not _indexable(path):
                 report.skip("unsupported file type")
-            elif (reason := path_skip_reason(path, [])) is not None:
-                report.skip(reason)
             elif int(e.get("size", 0)) > self._s.max_file_bytes:
                 report.skip("file too large")
             else:

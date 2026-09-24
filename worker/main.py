@@ -21,6 +21,7 @@ from app.rag.pg_store import PgChunkStore
 from app.rag.rerank import LLMReranker, NoopReranker
 from app.rag.retrieval import Retriever
 from worker.dispatch import dispatch
+from worker.handlers import make_index_handler, make_purge_handler
 from worker.reconciler import reconcile
 from worker.runner import Handler, Worker
 
@@ -39,13 +40,11 @@ def build_handler(
     http: httpx.AsyncClient,
     store: PgChunkStore,
 ) -> Handler:
-    async def purge(job: Job) -> None:
-        if job.repo_full_name == "*":
-            await store.delete_installation(job.installation_id)
-        else:
-            await store.delete_repo(job.installation_id, job.repo_full_name)
-
-    handlers: dict[str, Handler] = {"review": review_stub, "index": review_stub, "purge": purge}
+    handlers: dict[str, Handler] = {
+        "review": review_stub,
+        "index": review_stub,
+        "purge": make_purge_handler(store),
+    }
     if not (settings.github_app_id and settings.github_private_key):
         return dispatch(handlers)
 
@@ -60,11 +59,7 @@ def build_handler(
     embedder = build_embedder(settings, http)
     indexer = RepoIndexer(github, embedder, store, settings)
 
-    async def index(job: Job) -> None:
-        sha = None if job.head_sha == "HEAD" else job.head_sha
-        await indexer.index_repo(job.installation_id, job.repo_full_name, sha)
-
-    handlers["index"] = index
+    handlers["index"] = make_index_handler(indexer)
 
     router = build_router(settings, http)
     if router.providers:
