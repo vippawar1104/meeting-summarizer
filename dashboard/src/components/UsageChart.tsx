@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { compact, int, monthLabel, usd } from "../format";
 import type { UsageRow } from "../types";
+import { Icon } from "./Icon";
 import { Tooltip, useTooltip } from "./Tooltip";
 
 export const MAX_BAR_PX = 96;
@@ -21,11 +22,12 @@ export function UsageChart({ rows }: { rows: UsageRow[] }) {
     <figure style={{ margin: 0 }}>
       <div className="toolbar">
         <button className="link" onClick={() => setAsTable((v) => !v)}>
+          <Icon name={asTable ? "bar-chart" : "table"} size={13} />
           {asTable ? "Show chart" : "Show as table"}
         </button>
       </div>
       {asTable ? (
-        <div className="table-wrap">
+        <div className="table-wrap card">
           <table>
             <thead>
               <tr>
@@ -50,7 +52,7 @@ export function UsageChart({ rows }: { rows: UsageRow[] }) {
           </table>
         </div>
       ) : (
-        <div className="chart" role="img" aria-label={`Reviews per month, ${rows.map((r) => `${monthLabel(r.period)}: ${r.reviews}`).join(", ")}`}>
+        <div className="chart card" role="img" aria-label={`Reviews per month, ${rows.map((r) => `${monthLabel(r.period)}: ${r.reviews}`).join(", ")}`}>
           {rows.map((r) => {
             const label = `${monthLabel(r.period)}: ${int(r.reviews)} reviews, ${int(r.findings)} findings, ${compact(r.tokens)} tokens`;
             return (

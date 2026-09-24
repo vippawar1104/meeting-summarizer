@@ -1,10 +1,11 @@
 import { compact, int, pct, relativeTime, usd } from "../format";
 import type { RecentReview, RepoRow } from "../types";
+import { Icon, type IconName } from "./Icon";
 
 export function RepoTable({ repos }: { repos: RepoRow[] }) {
   if (repos.length === 0) return <div className="empty">No repositories with findings yet.</div>;
   return (
-    <div className="table-wrap">
+    <div className="table-wrap card">
       <table>
         <thead>
           <tr>
@@ -18,7 +19,12 @@ export function RepoTable({ repos }: { repos: RepoRow[] }) {
         <tbody>
           {repos.map((r) => (
             <tr key={r.repo}>
-              <td>{r.repo}</td>
+              <td>
+                <span className="repo">
+                  <Icon name="folder" size={14} />
+                  {r.repo}
+                </span>
+              </td>
               <td className="num">{int(r.findings)}</td>
               <td className="num">{int(r.accepted)}</td>
               <td className="num">{int(r.dismissed)}</td>
@@ -32,17 +38,17 @@ export function RepoTable({ repos }: { repos: RepoRow[] }) {
 }
 
 /** A status is always an icon plus a word, never color alone. */
-export function statusOf(r: RecentReview): { word: string; cls: string } {
-  if (r.note?.startsWith("skipped")) return { word: "Skipped", cls: "skipped" };
-  if (r.status === "done") return { word: "Reviewed", cls: "done" };
-  if (r.status === "dead") return { word: "Failed", cls: "dead" };
-  return { word: "In progress", cls: "queued" };
+export function statusOf(r: RecentReview): { word: string; cls: string; icon: IconName } {
+  if (r.note?.startsWith("skipped")) return { word: "Skipped", cls: "skipped", icon: "minus-circle" };
+  if (r.status === "done") return { word: "Reviewed", cls: "done", icon: "check-circle" };
+  if (r.status === "dead") return { word: "Failed", cls: "dead", icon: "x-circle" };
+  return { word: "In progress", cls: "queued", icon: "clock" };
 }
 
 export function RecentTable({ recent, now }: { recent: RecentReview[]; now?: Date }) {
   if (recent.length === 0) return <div className="empty">No reviews yet.</div>;
   return (
-    <div className="table-wrap">
+    <div className="table-wrap card">
       <table>
         <thead>
           <tr>
@@ -63,7 +69,10 @@ export function RecentTable({ recent, now }: { recent: RecentReview[]; now?: Dat
                   {r.repo}#{r.pr} <span className="muted">{r.sha}</span>
                 </td>
                 <td title={r.note ?? undefined}>
-                  <span className={`status ${s.cls}`}>{s.word}</span>
+                  <span className={`status ${s.cls}`}>
+                    <Icon name={s.icon} size={14} />
+                    {s.word}
+                  </span>
                 </td>
                 <td className="num">{int(r.findings)}</td>
                 <td className="num">{compact(r.tokens)}</td>

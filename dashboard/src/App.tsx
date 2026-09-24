@@ -5,6 +5,7 @@ import { Login } from "./components/Login";
 import { PlanCard } from "./components/PlanCard";
 import { RuleBars } from "./components/RuleBars";
 import { RecentTable, RepoTable } from "./components/Tables";
+import { SectionTitle } from "./components/SectionTitle";
 import { Tile } from "./components/Tile";
 import { UsageChart } from "./components/UsageChart";
 import { compact, int, pct, usd } from "./format";
@@ -95,42 +96,42 @@ export default function App() {
       {overview && t && (
         <main>
           <section aria-label="Summary">
-            <h2>Summary</h2>
+            <SectionTitle icon="grid">Summary</SectionTitle>
             <div className="tiles">
-              <Tile label="Reviews" value={int(t.reviews)} />
-              <Tile label="Pull requests" value={int(t.prs)} />
-              <Tile label="Findings posted" value={int(t.findings)} />
-              <Tile label="Precision" value={pct(t.precision)} hint={t.precision === null ? "No feedback yet" : "Accepted of judged"} />
-              <Tile label="Accepted" value={int(t.accepted)} />
-              <Tile label="Dismissed" value={int(t.dismissed)} />
-              <Tile label="Tokens" value={compact(t.tokens)} />
-              <Tile label="Cost" value={usd(t.cost_usd)} hint={t.cost_usd ? undefined : "No verified price yet"} />
+              <Tile icon="check-circle" label="Reviews" value={int(t.reviews)} />
+              <Tile icon="git-pull-request" label="Pull requests" value={int(t.prs)} />
+              <Tile icon="message-square" label="Findings posted" value={int(t.findings)} />
+              <Tile icon="target" label="Precision" value={pct(t.precision)} hint={t.precision === null ? "No feedback yet" : "Accepted of judged"} />
+              <Tile icon="thumbs-up" label="Accepted" value={int(t.accepted)} />
+              <Tile icon="thumbs-down" label="Dismissed" value={int(t.dismissed)} />
+              <Tile icon="cpu" label="Tokens" value={compact(t.tokens)} />
+              <Tile icon="coins" label="Cost" value={usd(t.cost_usd)} hint={t.cost_usd ? undefined : "No verified price yet"} />
             </div>
           </section>
 
           <section aria-label="Plan">
-            <h2>Plan and usage</h2>
+            <SectionTitle icon="credit-card">Plan and usage</SectionTitle>
             <PlanCard plan={overview.plan} period={overview.period} installation={overview.installation_id} />
           </section>
 
           <section aria-label="Precision by rule">
-            <h2>Precision by rule</h2>
+            <SectionTitle icon="target">Precision by rule</SectionTitle>
             <p className="sub">Of the findings people judged, the share they accepted.</p>
             <RuleBars rules={overview.rules} />
           </section>
 
           <section aria-label="Monthly usage">
-            <h2>Reviews per month</h2>
+            <SectionTitle icon="calendar">Reviews per month</SectionTitle>
             <UsageChart rows={overview.usage} />
           </section>
 
           <section aria-label="Repositories">
-            <h2>Repositories</h2>
+            <SectionTitle icon="folder">Repositories</SectionTitle>
             <RepoTable repos={overview.repos} />
           </section>
 
           <section aria-label="Recent reviews">
-            <h2>Recent reviews</h2>
+            <SectionTitle icon="clock">Recent reviews</SectionTitle>
             <RecentTable recent={overview.recent} />
           </section>
         </main>

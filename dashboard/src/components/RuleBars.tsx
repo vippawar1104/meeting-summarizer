@@ -1,5 +1,6 @@
 import { int, pct } from "../format";
 import type { Rule } from "../types";
+import { Icon, categoryIcon } from "./Icon";
 import { Meter } from "./Meter";
 
 /** Precision per rule: of the findings people judged, the share they accepted. */
@@ -10,10 +11,15 @@ export function RuleBars({ rules }: { rules: Rule[] }) {
   const anyJudged = rules.some((r) => r.accepted + r.dismissed > 0);
   return (
     <>
-      <div className="rules">
+      <div className="rules card">
         {rules.map((r) => (
           <div className="rule" key={r.category}>
-            <div className="name">{r.category}</div>
+            <div className="name">
+              <span className="badge">
+                <Icon name={categoryIcon(r.category)} size={14} />
+              </span>
+              {r.category}
+            </div>
             <Meter value={r.precision ?? 0} label={`${r.category} precision`} />
             <div className="p">{pct(r.precision)}</div>
             <div className="counts">

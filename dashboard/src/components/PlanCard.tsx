@@ -2,6 +2,7 @@ import { useState } from "react";
 import { startCheckout } from "../api";
 import { int, monthLabel, share } from "../format";
 import type { Plan } from "../types";
+import { Icon } from "./Icon";
 import { Meter } from "./Meter";
 
 export function PlanCard({ plan, period, installation }: { plan: Plan; period: string; installation: number }) {
@@ -21,9 +22,12 @@ export function PlanCard({ plan, period, installation }: { plan: Plan; period: s
 
   if (plan.name === "pro" || plan.limit === null) {
     return (
-      <div className="plan">
+      <div className="plan card">
         <div className="grow">
-          <div className="name">Pro plan</div>
+          <div className="name">
+            <Icon name="check-circle" size={16} />
+            Pro plan
+          </div>
           <div className="note">Unlimited reviews. {int(plan.used)} so far in {monthLabel(period)}.</div>
         </div>
       </div>
@@ -32,10 +36,11 @@ export function PlanCard({ plan, period, installation }: { plan: Plan; period: s
 
   const nearLimit = plan.used >= plan.limit * 0.9;
   return (
-    <div className="plan">
+    <div className="plan card">
       <div className="grow">
         <div className="name">
-          Free plan · {int(plan.used)} of {int(plan.limit)} reviews used in {monthLabel(period)}
+          <span className="pill">Free</span>
+          {int(plan.used)} of {int(plan.limit)} reviews used in {monthLabel(period)}
         </div>
         <Meter value={share(plan.used, plan.limit)} label="Free reviews used this month" />
         <div className="note">
@@ -49,6 +54,7 @@ export function PlanCard({ plan, period, installation }: { plan: Plan; period: s
       </div>
       <button className="btn primary" onClick={upgrade} disabled={busy}>
         {busy ? "Opening checkout…" : "Upgrade"}
+        {!busy && <Icon name="arrow-up-right" size={14} />}
       </button>
     </div>
   );
