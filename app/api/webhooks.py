@@ -5,11 +5,12 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, Header, HTTPException, Request, Response
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import col
 
 from app.core.logging import correlation_id
-from app.db.models import Job
-from app.queue.streams import enqueue
+from app.db.models import Job, JobStatus
 
 router = APIRouter()
 log = structlog.get_logger()
@@ -59,8 +60,19 @@ async def github_webhook(
             except IntegrityError:
                 # Same installation + PR + head SHA already has a job: never review twice.
                 await session.rollback()
+                # A previous attempt may have committed the row but failed to enqueue it. The
+                # enqueue is idempotent, so re-offering a still-queued job is always safe.
+                existing = (
+                    await session.execute(
+                        select(Job).where(col(Job.idempotency_key) == job.idempotency_key)
+                    )
+                ).scalar_one_or_none()
+                if existing is not None and existing.status == JobStatus.QUEUED:
+                    await request.app.state.queue.enqueue(
+                        existing.id, existing.installation_id, existing.changed_lines
+                    )
                 return _ok("duplicate_review")
-        await enqueue(redis, settings.job_stream, job)
+        await request.app.state.queue.enqueue(job.id, job.installation_id, job.changed_lines)
     except Exception:
         # Free the delivery id so GitHub's redelivery is not swallowed as a duplicate.
         await redis.delete(dedupe_key)

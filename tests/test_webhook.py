@@ -30,7 +30,7 @@ async def test_bad_signature_is_401_and_enqueues_nothing(env):
     r = await post_webhook(env["client"], pr_payload(), signature="sha256=bad")
     assert r.status_code == 401
     assert await job_count(env) == 0
-    assert await env["redis"].xlen(env["stream"]) == 0
+    assert (await env["queue"].depth())["ready"] == 0
 
 
 async def test_valid_pr_event_is_enqueued(env):
@@ -38,7 +38,7 @@ async def test_valid_pr_event_is_enqueued(env):
     assert r.status_code == 200
     assert r.json() == {"status": "enqueued"}
     assert await job_count(env) == 1
-    assert await env["redis"].xlen(env["stream"]) == 1
+    assert (await env["queue"].depth())["ready"] == 1
 
 
 async def test_job_row_fields(env):
@@ -55,7 +55,7 @@ async def test_redelivery_same_delivery_id_is_deduped(env):
     r = await post_webhook(env["client"], pr_payload(), delivery="same")
     assert r.json() == {"status": "duplicate_delivery"}
     assert await job_count(env) == 1
-    assert await env["redis"].xlen(env["stream"]) == 1
+    assert (await env["queue"].depth())["ready"] == 1
 
 
 async def test_new_delivery_same_head_sha_never_reviews_twice(env):
@@ -63,7 +63,7 @@ async def test_new_delivery_same_head_sha_never_reviews_twice(env):
     r = await post_webhook(env["client"], pr_payload(), delivery="b")
     assert r.json() == {"status": "duplicate_review"}
     assert await job_count(env) == 1
-    assert await env["redis"].xlen(env["stream"]) == 1
+    assert (await env["queue"].depth())["ready"] == 1
 
 
 async def test_new_head_sha_gets_new_review(env):
@@ -93,12 +93,10 @@ async def test_missing_delivery_header_is_400(env):
 
 
 async def test_enqueue_failure_releases_delivery_id_for_redelivery(env, monkeypatch):
-    import app.api.webhooks as wh
-
     async def boom(*a, **k):
         raise ConnectionError("redis down")
 
-    monkeypatch.setattr(wh, "enqueue", boom)
+    monkeypatch.setattr(env["queue"], "enqueue", boom)
     r = await post_webhook(env["client"], pr_payload(), delivery="retry-me")
     assert r.status_code == 503
     assert not await env["redis"].exists("delivery:retry-me")
@@ -110,3 +108,30 @@ async def test_correlation_id_returned_and_stored(env):
     async with env["sessionmaker"]() as s:
         job = (await s.execute(select(Job))).scalar_one()
     assert job.correlation_id == cid
+
+
+async def test_redelivery_after_failed_enqueue_recovers_the_job(env, monkeypatch):
+    """DB commit succeeded but Redis failed: GitHub's redelivery must enqueue the orphaned job."""
+    real = env["queue"].enqueue
+
+    async def boom(*a, **k):
+        raise ConnectionError("redis down")
+
+    monkeypatch.setattr(env["queue"], "enqueue", boom)
+    r1 = await post_webhook(env["client"], pr_payload(), delivery="first")
+    assert r1.status_code == 503 and await job_count(env) == 1
+    assert (await env["queue"].depth())["ready"] == 0
+
+    monkeypatch.setattr(env["queue"], "enqueue", real)
+    r2 = await post_webhook(env["client"], pr_payload(), delivery="second")
+    assert r2.status_code == 200
+    assert (await env["queue"].depth())["ready"] == 1
+
+
+async def test_status_is_stored_as_lowercase_value(env):
+    from sqlalchemy import text
+
+    await post_webhook(env["client"], pr_payload())
+    async with env["sessionmaker"]() as s:
+        raw = (await s.execute(text("select status from jobs"))).scalar_one()
+    assert raw == "queued"

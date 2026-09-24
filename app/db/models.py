@@ -2,10 +2,13 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from sqlalchemy import Column
+from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
 
 def _now() -> datetime:
+    """Timezone-aware UTC; SQLModel stores datetimes as timestamptz and rejects naive values."""
     return datetime.now(UTC)
 
 
@@ -13,7 +16,6 @@ class JobStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
     DONE = "done"
-    FAILED = "failed"
     DEAD = "dead"
 
 
@@ -30,8 +32,22 @@ class Job(SQLModel, table=True):
     pr_number: int
     head_sha: str
     changed_lines: int = 0
-    status: JobStatus = Field(default=JobStatus.QUEUED, index=True)
+    # Store the enum *value* ("queued"), not the member name, so raw SQL and code agree.
+    status: JobStatus = Field(
+        default=JobStatus.QUEUED,
+        sa_column=Column(
+            SAEnum(
+                JobStatus,
+                native_enum=False,
+                length=16,
+                values_callable=lambda e: [m.value for m in e],
+            ),
+            index=True,
+            nullable=False,
+        ),
+    )
     attempts: int = 0
+    last_error: str | None = None
     delivery_id: str
     correlation_id: str
     created_at: datetime = Field(default_factory=_now)

@@ -12,6 +12,7 @@ from sqlmodel import SQLModel
 from app.core.config import Settings
 from app.db.session import make_engine, make_sessionmaker
 from app.main import create_app
+from app.queue.redis_queue import RedisJobQueue
 
 SECRET = "test-secret"
 
@@ -47,13 +48,14 @@ async def env(tmp_path: Any) -> AsyncIterator[dict[str, Any]]:
     redis = fakeredis.FakeAsyncRedis()
     app = create_app(settings)
     app.state.redis = redis
+    app.state.queue = RedisJobQueue(redis)
     app.state.sessionmaker = make_sessionmaker(engine)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as client:
         yield {
             "client": client,
             "redis": redis,
             "sessionmaker": app.state.sessionmaker,
-            "stream": settings.job_stream,
+            "queue": app.state.queue,
             "app": app,
         }
     await engine.dispose()
@@ -77,3 +79,31 @@ async def post_webhook(
             "Content-Type": "application/json",
         },
     )
+
+
+@pytest.fixture
+def clock() -> Any:
+    from tests.helpers import FakeClock
+
+    return FakeClock()
+
+
+@pytest.fixture
+async def queue(clock: Any) -> RedisJobQueue:
+    return RedisJobQueue(fakeredis.FakeAsyncRedis(), clock=clock)
+
+
+@pytest.fixture
+async def wenv(tmp_path: Any, clock: Any) -> AsyncIterator[dict[str, Any]]:
+    """Worker environment: real SQLite DB, fake Redis, fake clock."""
+    engine = make_engine(f"sqlite+aiosqlite:///{tmp_path}/w.db")
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    redis = fakeredis.FakeAsyncRedis()
+    yield {
+        "sm": make_sessionmaker(engine),
+        "queue": RedisJobQueue(redis, clock=clock),
+        "redis": redis,
+        "clock": clock,
+    }
+    await engine.dispose()

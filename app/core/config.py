@@ -13,7 +13,18 @@ class Settings(BaseSettings):
     github_webhook_secret: str = "dev-secret"
     delivery_ttl_seconds: int = 7 * 24 * 3600
 
-    job_stream: str = "reviewly:jobs"
+    queue_prefix: str = "rq:"
+    worker_concurrency: int = 4
+    per_installation_cap: int = 2  # max in-flight jobs per installation, across all workers
+    visibility_timeout_s: int = 120  # a job whose worker stops heartbeating is requeued
+    job_timeout_s: float = 90
+    max_attempts: int = 5
+    backoff_base_s: float = 5.0
+    backoff_cap_s: float = 300.0
+    poll_interval_s: float = 0.2
+    reconcile_interval_s: float = 30.0
+    reconcile_grace_s: float = 60.0  # only re-enqueue jobs untouched for this long
+    shutdown_grace_s: float = 25.0
     log_level: str = "INFO"
 
 
