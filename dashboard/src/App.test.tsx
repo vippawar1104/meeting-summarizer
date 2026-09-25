@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
-import { overview } from "./fixtures";
+import { llmNone, overview } from "./fixtures";
 
 function mockApi(routes: Record<string, () => Response | Promise<Response>>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -23,6 +23,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 const loggedIn = {
+  "GET /api/config": () => json({ app_install_url: null, github_login: true }),
+  "GET /api/installations/42/llm": () => json(llmNone),
   "GET /api/me": () => json({ login: "octocat", installations: [42] }),
   "GET /api/installations/42/overview": () => json(overview),
 };
@@ -152,6 +154,8 @@ describe("signed in", () => {
     const fetchMock = mockApi({
       "GET /api/me": () => json({ login: "octocat", installations: [42, 7] }),
       "GET /api/installations/42/overview": () => json(overview),
+      "GET /api/installations/42/llm": () => json(llmNone),
+      "GET /api/installations/7/llm": () => json(llmNone),
       "GET /api/installations/7/overview": () => json({ ...overview, installation_id: 7, totals: { ...overview.totals, reviews: 99 } }),
     });
     render(<App />);
@@ -191,5 +195,40 @@ describe("theme", () => {
     render(<App />);
     await screen.findByRole("region", { name: "Summary" });
     expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+});
+
+describe("onboarding and AI model", () => {
+  it("shows the getting-started checklist until the first review", async () => {
+    mockApi({
+      ...loggedIn,
+      "GET /api/installations/42/overview": () => json({ ...overview, totals: { ...overview.totals, reviews: 0, precision: null } }),
+    });
+    render(<App />);
+    expect(await screen.findByRole("region", { name: "Getting started" })).toBeInTheDocument();
+  });
+
+  it("hides it once reviews exist, and shows the AI model section", async () => {
+    mockApi(loggedIn);
+    render(<App />);
+    await screen.findByRole("region", { name: "Summary" });
+    expect(screen.queryByRole("region", { name: "Getting started" })).not.toBeInTheDocument();
+    const model = screen.getByRole("region", { name: "AI model" });
+    expect(await within(model).findByText("Using Reviewly's built-in models")).toBeInTheDocument();
+  });
+
+  it("offers an Install on GitHub button to a user with no installations, when the app URL is configured", async () => {
+    mockApi({
+      "GET /api/config": () => json({ app_install_url: "https://github.com/apps/reviewly/installations/new", github_login: true }),
+      "GET /api/me": () => json({ login: "octocat", installations: [] }),
+    });
+    render(<App />);
+    expect(await screen.findByRole("link", { name: /install on github/i })).toHaveAttribute("href", "https://github.com/apps/reviewly/installations/new");
+  });
+
+  it("still works when the config endpoint is unavailable", async () => {
+    mockApi({ ...loggedIn, "GET /api/config": () => new Response("", { status: 500 }) });
+    render(<App />);
+    expect(await screen.findByRole("region", { name: "Summary" })).toBeInTheDocument();
   });
 });

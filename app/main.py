@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from redis.asyncio import Redis
 
-from app.api import auth, dashboard, health, llm_settings, stripe_webhook, webhooks
+from app.api import auth, config, dashboard, health, llm_settings, setup, stripe_webhook, webhooks
 from app.core.config import Settings, get_settings, insecure_settings
 from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging, correlation_id
@@ -64,6 +64,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth.router)
     app.include_router(dashboard.router)
     app.include_router(llm_settings.router)
+    app.include_router(config.router)
+    app.include_router(setup.router)
 
     # The built dashboard (if present) is served from the same origin, last so API routes win.
     dist = Path(__file__).resolve().parent.parent / "dashboard" / "dist"

@@ -66,6 +66,32 @@ export interface Overview {
   recent: RecentReview[];
 }
 
+export interface ProviderOption {
+  id: string;
+  label: string;
+  needs_base_url: boolean;
+  models: string[];
+  key_url: string;
+}
+
+export interface LLMSettings {
+  configured: boolean;
+  provider: string | null;
+  model: string | null;
+  base_url: string | null;
+  key_hint: string | null;
+  enabled: boolean;
+  last_test_ok: boolean | null;
+  last_test_error: string | null;
+  last_test_at: string | null;
+  providers: ProviderOption[];
+}
+
+export interface PublicConfig {
+  app_install_url: string | null;
+  github_login: boolean;
+}
+
 export interface Me {
   login: string;
   installations: number[];

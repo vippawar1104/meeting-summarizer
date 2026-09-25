@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { Unauthorized, fetchMe, fetchOverview } from "./api";
+import { Unauthorized, fetchConfig, fetchMe, fetchOverview } from "./api";
+import { GettingStarted } from "./components/GettingStarted";
 import { Header } from "./components/Header";
+import { Icon } from "./components/Icon";
 import { Login } from "./components/Login";
+import { ModelSettings } from "./components/ModelSettings";
 import { PlanCard } from "./components/PlanCard";
 import { RuleBars } from "./components/RuleBars";
 import { RecentTable, RepoTable } from "./components/Tables";
@@ -20,8 +23,13 @@ export default function App() {
   const [installation, setInstallation] = useState<number | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [installUrl, setInstallUrl] = useState<string | null>(null);
+  const [ownKey, setOwnKey] = useState(false);
 
   useEffect(() => {
+    fetchConfig()
+      .then((c) => setInstallUrl(c.app_install_url))
+      .catch(() => setInstallUrl(null)); // optional: the page works without it
     fetchMe()
       .then((me) => {
         setSession({ kind: "ready", me });
@@ -75,6 +83,12 @@ export default function App() {
         <div className="center">
           <h1>No installations yet</h1>
           <p>Install the Reviewly GitHub App on a repository, and it will show up here after its first review.</p>
+          {installUrl && (
+            <a className="btn primary" href={installUrl} style={{ textDecoration: "none", padding: "8px 14px" }}>
+              <Icon name="plus" size={15} />
+              Install on GitHub
+            </a>
+          )}
         </div>
       </div>
     );
@@ -95,6 +109,8 @@ export default function App() {
 
       {overview && t && (
         <main>
+          {t.reviews === 0 && <GettingStarted hasReviews={false} usesOwnKey={ownKey} installUrl={installUrl} />}
+
           <section aria-label="Summary">
             <SectionTitle icon="grid">Summary</SectionTitle>
             <div className="tiles">
@@ -112,6 +128,12 @@ export default function App() {
           <section aria-label="Plan">
             <SectionTitle icon="credit-card">Plan and usage</SectionTitle>
             <PlanCard plan={overview.plan} period={overview.period} installation={overview.installation_id} />
+          </section>
+
+          <section aria-label="AI model">
+            <SectionTitle icon="cpu">AI model</SectionTitle>
+            <p className="sub">Reviews use Reviewly's models unless you add your own key.</p>
+            <ModelSettings installation={overview.installation_id} onChange={setOwnKey} />
           </section>
 
           <section aria-label="Precision by rule">

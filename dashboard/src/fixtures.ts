@@ -23,3 +23,20 @@ export const overview: Overview = {
     { repo: "acme/api", pr: 3, sha: "c7d8e9f", status: "done", findings: 0, tokens: 0, cost_usd: 0, note: "skipped: superseded by a newer commit", at: "2026-09-24T09:00:00Z" },
   ],
 };
+
+import type { LLMSettings } from "./types";
+
+export const providers = [
+  { id: "openai", label: "OpenAI", needs_base_url: false, models: ["gpt-4.1", "gpt-4o-mini"], key_url: "https://platform.openai.com/api-keys" },
+  { id: "anthropic", label: "Anthropic (Claude)", needs_base_url: false, models: ["claude-sonnet-5"], key_url: "https://console.anthropic.com/settings/keys" },
+  { id: "custom", label: "OpenAI-compatible endpoint", needs_base_url: true, models: [], key_url: "" },
+];
+
+export const llmNone: LLMSettings = {
+  configured: false, provider: null, model: null, base_url: null, key_hint: null, enabled: false,
+  last_test_ok: null, last_test_error: null, last_test_at: null, providers,
+};
+
+export const llmOpenAI: LLMSettings = {
+  ...llmNone, configured: true, provider: "openai", model: "gpt-4.1", key_hint: "...3456", enabled: true, last_test_ok: true,
+};

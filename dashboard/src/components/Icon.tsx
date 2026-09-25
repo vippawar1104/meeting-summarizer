@@ -32,6 +32,13 @@ const PATHS: Record<string, ReactNode> = {
   table: (<><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><path d="M3.5 10h17M3.5 15h17M9 4.5v15" /></>),
   "bar-chart": (<path d="M5 20V11M12 20V5M19 20v-7" />),
   check: (<path d="M5 12.5l4.5 4.5L19 7.5" />),
+  key: (<><circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M16 7l3 3M14 9l3 3" /></>),
+  lock: (<><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></>),
+  trash: (<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />),
+  refresh: (<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" />),
+  "external-link": (<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />),
+  plus: (<path d="M12 5v14M5 12h14" />),
+  rocket: (<><path d="M5 19c0-2 1-3.500 2.500-4M9 15l-3-3c1.500-4.500 5-8 12-8 0 7-3.500 10.500-8 12z" /><circle cx="15" cy="9" r="1.400" /></>),
 };
 
 export type IconName = keyof typeof PATHS;

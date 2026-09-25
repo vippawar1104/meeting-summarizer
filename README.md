@@ -21,6 +21,31 @@ make up        # docker compose: postgres+pgvector, redis, migrate, api, worker
 - [x] M7 dashboard (React + TypeScript, black on white with dark mode), feedback loop, usage metering, free tier, Stripe test-mode checkout
 - [ ] M8 observability, load test, deploy
 
+## Using Reviewly
+**As a user (no setup):** install the GitHub App on your repositories, then open a pull request. Reviewly reads the diff and posts one
+review with inline comments and suggested fixes, usually within a minute. Sign in to the dashboard to see reviews, findings and
+precision. Reply `@reviewly dismiss` or `@reviewly accept` to a comment (or react 👍/👎) and it learns what your team wants.
+
+**Use your own AI model.** In the dashboard, open *AI model*, pick a provider (OpenAI, Anthropic, Google Gemini, Groq, Mistral, or any
+OpenAI-compatible endpoint such as OpenRouter), type the model name, paste your API key and press *Save and test key*. The key is checked
+with a real call before it is saved, encrypted at rest (Fernet), never shown again (only its last four characters), and used only to review
+your repositories. With your own key: your code goes to the provider you chose and never to Reviewly's, there is no fallback to Reviewly's
+models if your key fails (the PR gets a notice instead), and reviews don't count against the free plan. Custom endpoints must be public
+`https` URLs (private and internal addresses are refused). Repo-context search is skipped for these installations.
+
+**Hosting it yourself**
+1. `make up` (local) or deploy the same images with Postgres (pgvector) and Redis.
+2. Set `REVIEWLY_ENV=prod`, `REVIEWLY_PUBLIC_URL`, `REVIEWLY_GITHUB_WEBHOOK_SECRET`, `REVIEWLY_DASHBOARD_SECRET` (32+ random chars),
+   `REVIEWLY_ENCRYPTION_KEY` (`python -m app.core.crypto`) and `REVIEWLY_SETUP_TOKEN` (any random string). The app refuses to start otherwise.
+3. Open `https://your-host/setup?token=<REVIEWLY_SETUP_TOKEN>` and press the button. GitHub creates the App with every setting pre-filled and
+   this page shows its credentials once as environment variables. Put them in your host's secrets, remove `REVIEWLY_SETUP_TOKEN`, restart.
+4. Add at least one platform model key (for example `REVIEWLY_GROQ_API_KEY`), or leave the platform without one so every installation must
+   bring its own. Then install the App on a repo and open a PR.
+
+**Try the whole system locally without GitHub:** `scripts/mock_github.py` is a fake GitHub API and `scripts/e2e_local.py` sends a PR through
+webhook, queue, worker and your real LLM key (`docker-compose.e2e.yml`). One run of a real bug case produced a review with the correct inline
+comment and fix suggestion in about 3 seconds.
+
 ## Repo context (M4) design notes
 - Indexed per push to the default branch; incremental by git blob SHA, so unchanged files are never re-fetched or re-embedded.
 - Chunks follow function/class boundaries (Python, JS/TS/TSX, Go, Java via tree-sitter; line windows for other text files).
@@ -119,3 +144,13 @@ signed webhooks (`/webhooks/stripe`, timestamp-checked against replay) keep the 
 comment linking against GitHub itself, and Stripe Checkout and its webhooks. All are covered by tests with mocked HTTP; the
 feedback webhook, dashboard API, tenant isolation and a comment id above 2^31 were exercised live against Postgres.
 Cost figures show "n/a" because there is no verified price for the models in use.
+
+## Bring your own key: safety notes
+- **Encryption:** keys are stored with Fernet (`REVIEWLY_ENCRYPTION_KEY`, comma-separated to rotate: the first key encrypts, all decrypt).
+  Losing the key makes stored keys unreadable; affected installations are told to re-enter theirs instead of silently using Reviewly's models.
+- **SSRF:** a custom endpoint must be `https`, on a public hostname whose every DNS answer is a public address, checked when saved and again
+  before each use. A hostile DNS server could still change its answer between the check and the connection (DNS rebinding); pin the connection
+  to the checked address if you host this for untrusted users.
+- **Abuse:** each save/test makes a real call to a user-chosen endpoint, so it is limited to 10 per installation per hour.
+- **Not verified:** the Anthropic, OpenAI and custom-endpoint adapters have only been exercised against mocked HTTP. Groq was exercised live
+  (a wrong key was refused; the real key saved; the next review used the chosen model).
