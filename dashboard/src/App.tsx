@@ -13,7 +13,7 @@ import { Tile } from "./components/Tile";
 import { UsageChart } from "./components/UsageChart";
 import { compact, int, pct, usd } from "./format";
 import { useTheme } from "./theme";
-import type { Me, Overview } from "./types";
+import type { Me, Overview, PublicConfig } from "./types";
 
 type Session = { kind: "loading" } | { kind: "login" } | { kind: "error"; message: string } | { kind: "ready"; me: Me };
 
@@ -24,11 +24,15 @@ export default function App() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [installUrl, setInstallUrl] = useState<string | null>(null);
+  const [config, setConfig] = useState<PublicConfig | null>(null);
   const [ownKey, setOwnKey] = useState(false);
 
   useEffect(() => {
     fetchConfig()
-      .then((c) => setInstallUrl(c.app_install_url))
+      .then((c) => {
+        setInstallUrl(c.app_install_url);
+        setConfig(c);
+      })
       .catch(() => setInstallUrl(null)); // optional: the page works without it
     fetchMe()
       .then((me) => {
@@ -63,7 +67,7 @@ export default function App() {
     return <div className="page">{header(false)}<div className="center"><p>Loading…</p></div></div>;
   }
   if (session.kind === "login") {
-    return <div className="page">{header(false)}<Login /></div>;
+    return <div className="page">{header(false)}<Login config={config} /></div>;
   }
   if (session.kind === "error") {
     return (

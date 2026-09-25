@@ -23,7 +23,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 const loggedIn = {
-  "GET /api/config": () => json({ app_install_url: null, github_login: true }),
+  "GET /api/config": () => json({ app_install_url: null, github_login: true, dev_login: false }),
   "GET /api/installations/42/llm": () => json(llmNone),
   "GET /api/me": () => json({ login: "octocat", installations: [42] }),
   "GET /api/installations/42/overview": () => json(overview),
@@ -219,7 +219,7 @@ describe("onboarding and AI model", () => {
 
   it("offers an Install on GitHub button to a user with no installations, when the app URL is configured", async () => {
     mockApi({
-      "GET /api/config": () => json({ app_install_url: "https://github.com/apps/reviewly/installations/new", github_login: true }),
+      "GET /api/config": () => json({ app_install_url: "https://github.com/apps/reviewly/installations/new", github_login: true, dev_login: false }),
       "GET /api/me": () => json({ login: "octocat", installations: [] }),
     });
     render(<App />);
