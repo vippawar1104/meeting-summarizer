@@ -79,6 +79,12 @@ class Settings(BaseSettings):
     stripe_price_id: str | None = None
     stripe_webhook_secret: str | None = None
 
+    # Users' own LLM keys are stored encrypted with this (comma-separated to rotate). Required outside dev.
+    encryption_key: str | None = None
+    # Onboarding: where users install the GitHub App, and the operator's one-time app-creation page
+    github_app_slug: str | None = None
+    setup_token: str | None = None
+
     # Dashboard
     dashboard_secret: str = "dev-dashboard-secret-change-me"  # signs session cookies
     dashboard_dev_login: bool = False  # local-only login without a GitHub OAuth app
@@ -107,6 +113,10 @@ def insecure_settings(settings: Settings) -> list[str]:
     if settings.dashboard_secret in PLACEHOLDER_SECRETS or len(settings.dashboard_secret) < 32:
         problems.append(
             "REVIEWLY_DASHBOARD_SECRET must be a random string of at least 32 characters"
+        )
+    if not settings.encryption_key:
+        problems.append(
+            "REVIEWLY_ENCRYPTION_KEY is required (generate one: python -m app.core.crypto)"
         )
     if settings.dashboard_dev_login:
         problems.append("REVIEWLY_DASHBOARD_DEV_LOGIN must not be enabled outside dev")

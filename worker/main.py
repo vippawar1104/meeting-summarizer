@@ -7,6 +7,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings, get_settings
+from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging
 from app.cost.budget import TokenBudget
 from app.cost.cache import ReviewCache
@@ -16,6 +17,7 @@ from app.db.models import Job
 from app.db.session import make_engine, make_sessionmaker
 from app.github.auth import GitHubAppAuth
 from app.github.client import GitHubClient
+from app.llm.byok import ByokResolver
 from app.llm.factory import build_router
 from app.pipeline.review import ReviewPipeline
 from app.queue.redis_queue import RedisJobQueue
@@ -74,26 +76,33 @@ def build_handler(
     handlers["index"] = make_index_handler(indexer)
 
     # Every LLM call (review, repair, rerank) goes through the guard: redaction, rate limit, budget.
+    limiter = RateLimiter(
+        redis, per_minute=settings.llm_rate_per_min, burst=settings.llm_rate_burst
+    )
     router = GuardedRouter(
         build_router(settings, http),
         budget=TokenBudget(redis, settings.daily_token_budget),
-        limiter=RateLimiter(
-            redis, per_minute=settings.llm_rate_per_min, burst=settings.llm_rate_burst
-        ),
+        limiter=limiter,
         redact=settings.redaction_enabled,
         max_wait_s=settings.llm_rate_max_wait_s,
     )
-    if router.providers:
-        retriever = None
-        if settings.rag_enabled:
-            reranker = LLMReranker(router) if settings.rerank_enabled else NoopReranker()
-            retriever = Retriever(embedder, store, reranker, settings)
-        pipeline = ReviewPipeline(github, router, settings, sm, retriever, cache)
+    byok = ByokResolver(
+        sm,
+        SecretBox(settings.encryption_key or DEV_KEY),
+        http,
+        limiter,
+        allow_http=settings.env == "dev",
+    )
+    retriever = None
+    if settings.rag_enabled:
+        reranker = LLMReranker(router) if settings.rerank_enabled else NoopReranker()
+        retriever = Retriever(embedder, store, reranker, settings)
+    pipeline = ReviewPipeline(github, router, settings, sm, retriever, cache, byok.router_for)
 
-        async def review(job: Job) -> None:
-            await pipeline.run(job)
+    async def review(job: Job) -> None:
+        await pipeline.run(job)
 
-        handlers["review"] = review
+    handlers["review"] = review
     return dispatch(handlers)
 
 

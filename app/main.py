@@ -8,8 +8,9 @@ from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from redis.asyncio import Redis
 
-from app.api import auth, dashboard, health, stripe_webhook, webhooks
+from app.api import auth, dashboard, health, llm_settings, stripe_webhook, webhooks
 from app.core.config import Settings, get_settings, insecure_settings
+from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging, correlation_id
 from app.db.session import make_engine, make_sessionmaker
 from app.queue.redis_queue import RedisJobQueue
@@ -26,6 +27,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Tests pre-populate app.state; production builds real clients here.
         if not hasattr(app.state, "redis"):
             app.state.redis = Redis.from_url(settings.redis_url)
+        if not hasattr(app.state, "box"):
+            app.state.box = SecretBox(settings.encryption_key or DEV_KEY)
         if not hasattr(app.state, "http"):
             app.state.http = httpx.AsyncClient(timeout=30)
         if not hasattr(app.state, "sessionmaker"):
@@ -60,6 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(stripe_webhook.router)
     app.include_router(auth.router)
     app.include_router(dashboard.router)
+    app.include_router(llm_settings.router)
 
     # The built dashboard (if present) is served from the same origin, last so API routes win.
     dist = Path(__file__).resolve().parent.parent / "dashboard" / "dist"

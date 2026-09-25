@@ -114,3 +114,21 @@ class SubscriptionRow(SQLModel, table=True):
     stripe_subscription_id: str | None = Field(default=None, index=True)
     current_period_end: datetime | None = None
     updated_at: datetime = Field(default_factory=_now)
+
+
+class LLMSettingsRow(SQLModel, table=True):
+    """An installation's own LLM provider, model and (encrypted) API key. The key is never returned."""
+
+    __tablename__ = "llm_settings"
+
+    installation_id: int = Field(primary_key=True)
+    provider: str
+    model: str
+    base_url: str | None = None  # only for the custom OpenAI-compatible provider
+    api_key_encrypted: str
+    key_hint: str  # e.g. "...a1b2", the only part of the key ever shown
+    enabled: bool = True
+    last_test_ok: bool | None = None
+    last_test_error: str | None = None
+    last_test_at: datetime | None = None
+    updated_at: datetime = Field(default_factory=_now)

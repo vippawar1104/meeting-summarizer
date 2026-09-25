@@ -27,8 +27,11 @@ class ReviewCache:
         rules: list[str],
         context: str,
         feedback: str,
+        model_tag: str = "",
     ) -> str:
-        blob = json.dumps([prompt_version, system, section_norm, rules, context, feedback])
+        blob = json.dumps(
+            [prompt_version, system, section_norm, rules, context, feedback, model_tag]
+        )
         return hashlib.sha256(blob.encode()).hexdigest()
 
     def _k(self, installation_id: int, key: str) -> str:
