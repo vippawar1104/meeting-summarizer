@@ -1,4 +1,4 @@
-.PHONY: up down test lint seed dashboard-dev dashboard-test dashboard-build eval eval-baselines eval-report eval-validate eval-gate
+.PHONY: up down test lint seed e2e-mock e2e dashboard-dev dashboard-test dashboard-build eval eval-baselines eval-report eval-validate eval-gate
 up:
 	docker compose up --build -d
 down:
@@ -29,3 +29,10 @@ dashboard-test:
 	cd dashboard && npm run typecheck && npm test
 dashboard-build:
 	cd dashboard && npm ci && npm run build
+
+# Whole system locally with a fake GitHub and your real LLM key (see docker-compose.e2e.yml):
+#   make e2e-mock   (terminal 1)   then   make e2e   (terminal 2, after the stack is up with the e2e override)
+e2e-mock:
+	uv run python -m scripts.mock_github
+e2e:
+	uv run python -m scripts.e2e_local
