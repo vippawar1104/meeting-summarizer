@@ -168,8 +168,9 @@ Cost figures show "n/a" because there is no verified price for the models in use
 - **Encryption:** keys are stored with Fernet (`REVIEWLY_ENCRYPTION_KEY`, comma-separated to rotate: the first key encrypts, all decrypt).
   Losing the key makes stored keys unreadable; affected installations are told to re-enter theirs instead of silently using Reviewly's models.
 - **SSRF:** a custom endpoint must be `https`, on a public hostname whose every DNS answer is a public address, checked when saved and again
-  before each use. A hostile DNS server could still change its answer between the check and the connection (DNS rebinding); pin the connection
-  to the checked address if you host this for untrusted users.
+  before each use. The connection itself then resolves the name once, re-checks every answer and connects to that exact address (`app/core/pinned_http.py`),
+  so DNS rebinding cannot swap in an internal address; environment proxies and redirects are disabled for these calls. In dev mode
+  (`REVIEWLY_ENV=dev`) this client is off so local endpoints work. The check is tested with a scripted resolver, not against a live rebinding server.
 - **Abuse:** each save/test makes a real call to a user-chosen endpoint, so it is limited to 10 per installation per hour.
 - **Not verified:** the Anthropic, OpenAI and custom-endpoint adapters have only been exercised against mocked HTTP. Groq was exercised live
   (a wrong key was refused; the real key saved; the next review used the chosen model).

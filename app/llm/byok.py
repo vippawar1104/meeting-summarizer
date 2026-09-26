@@ -167,6 +167,7 @@ class ByokResolver:
         limiter: RateLimiter | None = None,
         *,
         allow_http: bool = False,
+        pinned_http: httpx.AsyncClient | None = None,
     ) -> None:
         self._sm, self._box, self._http, self._limiter, self._allow_http = (
             sm,
@@ -175,6 +176,8 @@ class ByokResolver:
             limiter,
             allow_http,
         )
+        # Custom endpoints are user-chosen URLs: they get a client that cannot reach private addresses.
+        self._pinned = pinned_http
 
     async def provider_for(self, installation_id: int) -> tuple[LLMProvider, str] | None:
         row = await get_row(self._sm, installation_id)
@@ -192,8 +195,9 @@ class ByokResolver:
                 base = await validate_base_url(row.base_url or "", allow_http=self._allow_http)
             except UnsafeURL as exc:
                 raise ByokError(f"Your custom endpoint is no longer allowed: {exc}.") from None
+        client = self._pinned if (row.provider == "custom" and self._pinned) else self._http
         return build_provider(
-            row.provider, row.model, secret, base, self._http
+            row.provider, row.model, secret, base, client
         ), f"{row.provider}:{row.model}"
 
     async def router_for(self, installation_id: int) -> tuple[RouterLike, str] | None:

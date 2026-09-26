@@ -47,6 +47,37 @@ def check_shape(url: str, *, allow_http: bool = False) -> tuple[str, str, int | 
     return parts.scheme, host, port
 
 
+async def resolve_public(host: str, port: int) -> list[str]:
+    """Every address `host` resolves to, after checking that ALL of them are public.
+
+    Raises UnsafeURL if any answer is private, loopback, link-local, etc. (one bad answer is
+    enough: a hostile DNS server can mix public and internal addresses).
+    """
+    try:
+        return [str(_ip_literal(host, checked=True))]
+    except ValueError:
+        pass
+    loop = asyncio.get_running_loop()
+    try:
+        infos = await loop.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except OSError:
+        raise UnsafeURL("that hostname could not be resolved") from None
+    if not infos:
+        raise UnsafeURL("that hostname could not be resolved")
+    addresses: list[str] = []
+    for info in infos:
+        _check_ip(ipaddress.ip_address(info[4][0]))
+        addresses.append(str(info[4][0]))
+    return addresses
+
+
+def _ip_literal(host: str, *, checked: bool) -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    ip = ipaddress.ip_address(host)  # ValueError if `host` is a name, not an address
+    if checked:
+        _check_ip(ip)
+    return ip
+
+
 async def validate_base_url(url: str, *, allow_http: bool = False) -> str:
     """Returns the normalised URL (no trailing slash) or raises UnsafeURL."""
     _, host, port = check_shape(url, allow_http=allow_http)

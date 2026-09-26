@@ -11,6 +11,7 @@ from app.core.config import Settings, get_settings
 from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging
 from app.core.metrics import registry
+from app.core.pinned_http import make_pinned_client
 from app.core.redis import make_redis
 from app.core.tracing import configure_tracing
 from app.cost.budget import TokenBudget
@@ -96,6 +97,7 @@ def build_handler(
         http,
         limiter,
         allow_http=settings.env == "dev",
+        pinned_http=None if settings.env == "dev" else make_pinned_client(),
     )
     retriever = None
     if settings.rag_enabled:
