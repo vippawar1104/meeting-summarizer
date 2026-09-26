@@ -87,7 +87,14 @@ async def save_llm_settings(
         raise HTTPException(status_code=422, detail=str(exc)) from None
     await _allow_test(request, installation_id)
     secret = body.api_key if body.api_key is not None else box.decrypt(existing.api_key_encrypted)  # type: ignore[union-attr]
-    provider = build_provider(body.provider, body.model, secret, base, http, timeout=45.0)
+    provider = build_provider(
+        body.provider,
+        body.model,
+        secret,
+        base,
+        _client_for(request, body.provider, http),
+        timeout=45.0,
+    )
     ok, error = await check_provider(provider, secret)
     if not ok:  # a key that does not work is never saved: it would only break the next pull request
         raise HTTPException(status_code=400, detail=error)
@@ -99,6 +106,12 @@ async def save_llm_settings(
         "llm_settings_saved", installation=installation_id, provider=body.provider, model=body.model
     )
     return _view(row)
+
+
+def _client_for(request: Request, provider: str, default: Any) -> Any:
+    """Custom endpoints are user-chosen URLs, so they go through a client that only connects to public addresses."""
+    pinned = getattr(request.app.state, "pinned_http", None)
+    return pinned if provider == "custom" and pinned is not None else default
 
 
 @router.post("/installations/{installation_id}/llm/test")
@@ -123,7 +136,15 @@ async def test_llm_settings(
     except ByokError as exc:
         return {"ok": False, "error": str(exc)}
     ok, error = await check_provider(
-        build_provider(row.provider, row.model, secret, base, http, timeout=45.0), secret
+        build_provider(
+            row.provider,
+            row.model,
+            secret,
+            base,
+            _client_for(request, row.provider, http),
+            timeout=45.0,
+        ),
+        secret,
     )
     saved = await save_settings(
         sm,

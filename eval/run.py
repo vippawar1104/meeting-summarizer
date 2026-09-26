@@ -45,7 +45,8 @@ def load_env_key(name: str | None) -> str | None:
 
 async def run_combo(model: str, prompt: str, args: argparse.Namespace) -> Path:
     cases = load_cases(kinds=set(args.kinds) if args.kinds else None, limit=args.limit)
-    recordings = ROOT / "recordings" / f"{slug(model)}__{prompt}.jsonl"
+    # "v3+verify" shares v3's recordings: the reviewer's calls are identical, only the check is new
+    recordings = ROOT / "recordings" / f"{slug(model)}__{prompt.split('+')[0]}.jsonl"
     started = time.time()
     results = await run_all(
         cases,

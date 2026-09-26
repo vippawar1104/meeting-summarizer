@@ -14,7 +14,9 @@ from app.core.config import Settings, get_settings, insecure_settings
 from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging, correlation_id
 from app.core.metrics import QUEUE_DEPTH, WEBHOOK_SECONDS, render
+from app.core.pinned_http import make_pinned_client
 from app.core.redis import make_redis
+from app.core.security_headers import security_headers
 from app.core.tracing import configure_tracing
 from app.db.session import make_engine, make_sessionmaker
 from app.queue.redis_queue import RedisJobQueue
@@ -36,6 +38,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.box = SecretBox(settings.encryption_key or DEV_KEY)
         if not hasattr(app.state, "http"):
             app.state.http = httpx.AsyncClient(timeout=30)
+        if not hasattr(app.state, "pinned_http") and settings.env != "dev":
+            app.state.pinned_http = make_pinned_client()
         if not hasattr(app.state, "sessionmaker"):
             app.state.engine = make_engine(
                 settings.database_url,
@@ -48,6 +52,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         yield
         await app.state.redis.aclose()
         await app.state.http.aclose()
+        if hasattr(app.state, "pinned_http"):
+            await app.state.pinned_http.aclose()
         if hasattr(app.state, "engine"):
             await app.state.engine.dispose()
 
@@ -68,6 +74,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if request.url.path == "/webhooks/github":
                 WEBHOOK_SECONDS.observe(time.perf_counter() - started)
         response.headers["x-request-id"] = cid
+        for name, value in security_headers(
+            request.url.path, production=settings.env == "prod"
+        ).items():
+            response.headers.setdefault(name, value)
         return response
 
     @app.get("/metrics", include_in_schema=False)

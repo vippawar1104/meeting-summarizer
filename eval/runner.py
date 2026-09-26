@@ -89,7 +89,8 @@ def make_settings(model: str, prompt: str) -> Settings:
     return Settings(
         _env_file=None,
         provider_order=split_model(model)[0],
-        prompt_version=prompt,
+        prompt_version=prompt.split("+")[0],
+        verify_findings="+verify" in prompt,
         review_concurrency=2,
         daily_token_budget=0,
         cache_enabled=False,

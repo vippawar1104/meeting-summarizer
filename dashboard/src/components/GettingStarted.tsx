@@ -18,7 +18,7 @@ export function GettingStarted({ hasReviews, usesOwnKey, installUrl }: Props) {
     {
       done: usesOwnKey,
       title: "Optional: use your own AI key",
-      body: "Prefer a specific model? Add your provider key under AI model below.",
+      body: "Prefer a specific model? Add your provider key under Settings.",
     },
   ];
   return (
