@@ -11,6 +11,7 @@ from sqlmodel import col
 from app.billing.plans import PlanStatus, plan_status
 from app.billing.usage import record_review
 from app.core.config import Settings
+from app.core.metrics import CACHE
 from app.cost.cache import ReviewCache
 from app.cost.guard import BudgetExceeded, current_installation
 from app.db.models import FindingRow, Job
@@ -284,7 +285,9 @@ class ReviewPipeline:
                     if hit is not None:
                         cached = parse_findings(hit)
                         if not cached.errors:
+                            CACHE.labels("hit").inc()
                             return GroupResult(findings=cached.findings, cache_hit=True)
+                    CACHE.labels("miss").inc()
                 result = await review_group(router, self._system, user)
                 if key is not None and result.clean:
                     await self._cache_put(job.installation_id, key, result.raw_text)

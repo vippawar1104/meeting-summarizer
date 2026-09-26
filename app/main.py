@@ -1,17 +1,21 @@
+import hmac
+import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
-from redis.asyncio import Redis
 
 from app.api import auth, config, dashboard, health, llm_settings, setup, stripe_webhook, webhooks
 from app.core.config import Settings, get_settings, insecure_settings
 from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging, correlation_id
+from app.core.metrics import QUEUE_DEPTH, WEBHOOK_SECONDS, render
+from app.core.redis import make_redis
+from app.core.tracing import configure_tracing
 from app.db.session import make_engine, make_sessionmaker
 from app.queue.redis_queue import RedisJobQueue
 
@@ -19,6 +23,7 @@ from app.queue.redis_queue import RedisJobQueue
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
+    configure_tracing(settings.otlp_endpoint, "reviewly-api")
     if problems := insecure_settings(settings):
         raise RuntimeError("refusing to start with insecure settings: " + "; ".join(problems))
 
@@ -26,13 +31,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Tests pre-populate app.state; production builds real clients here.
         if not hasattr(app.state, "redis"):
-            app.state.redis = Redis.from_url(settings.redis_url)
+            app.state.redis = make_redis(settings.redis_url)
         if not hasattr(app.state, "box"):
             app.state.box = SecretBox(settings.encryption_key or DEV_KEY)
         if not hasattr(app.state, "http"):
             app.state.http = httpx.AsyncClient(timeout=30)
         if not hasattr(app.state, "sessionmaker"):
-            app.state.engine = make_engine(settings.database_url)
+            app.state.engine = make_engine(
+                settings.database_url,
+                pool_size=settings.db_pool_size,
+                max_overflow=settings.db_max_overflow,
+            )
             app.state.sessionmaker = make_sessionmaker(app.state.engine)
         if not hasattr(app.state, "queue"):
             app.state.queue = RedisJobQueue(app.state.redis, prefix=settings.queue_prefix)
@@ -51,12 +60,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ) -> Response:
         cid = request.headers.get("x-request-id") or uuid.uuid4().hex
         token = correlation_id.set(cid)
+        started = time.perf_counter()
         try:
             response = await call_next(request)
         finally:
             correlation_id.reset(token)
+            if request.url.path == "/webhooks/github":
+                WEBHOOK_SECONDS.observe(time.perf_counter() - started)
         response.headers["x-request-id"] = cid
         return response
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics(request: Request) -> Response:
+        if settings.metrics_token:
+            supplied = request.headers.get("authorization", "")
+            if not hmac.compare_digest(supplied, f"Bearer {settings.metrics_token}"):
+                raise HTTPException(status_code=401, detail="metrics token required")
+        try:  # queue depth is read at scrape time; an unreachable Redis just omits the update
+            for state, count in (await request.app.state.queue.depth()).items():
+                QUEUE_DEPTH.labels(state=state).set(count)
+        except Exception:
+            pass
+        return Response(render(), media_type="text/plain; version=0.0.4")
 
     app.include_router(health.router)
     app.include_router(webhooks.router)

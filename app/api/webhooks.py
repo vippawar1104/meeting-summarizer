@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import col
 
 from app.core.logging import correlation_id
+from app.core.metrics import WEBHOOKS
 from app.db.models import Job, JobStatus
 from app.feedback.apply import parse_command, record_feedback, set_resolved
 
@@ -46,13 +47,21 @@ async def github_webhook(
     body = await request.body()
 
     if not verify_signature(settings.github_webhook_secret, body, x_hub_signature_256):
+        WEBHOOKS.labels(result="bad_signature").inc()
         raise HTTPException(status_code=401, detail="invalid signature")
     if not x_github_delivery:
         raise HTTPException(status_code=400, detail="missing delivery id")
 
     redis = request.app.state.redis
     dedupe_key = f"delivery:{x_github_delivery}"
-    if not await redis.set(dedupe_key, "1", nx=True, ex=settings.delivery_ttl_seconds):
+    try:
+        fresh = await redis.set(dedupe_key, "1", nx=True, ex=settings.delivery_ttl_seconds)
+    except Exception:
+        # Redis is down: say so (503), so GitHub redelivers, instead of an unhandled 500.
+        log.exception("webhook_dedupe_failed", delivery=x_github_delivery)
+        WEBHOOKS.labels(result="error").inc()
+        raise HTTPException(status_code=503, detail="temporarily unavailable") from None
+    if not fresh:
         return _ok("duplicate_delivery")
 
     if x_github_event not in SUPPORTED_EVENTS:
@@ -64,6 +73,7 @@ async def github_webhook(
         except Exception:
             await redis.delete(dedupe_key)
             log.exception("feedback_webhook_failed", delivery=x_github_delivery)
+            WEBHOOKS.labels(result="error").inc()
             raise HTTPException(status_code=503, detail="temporarily unavailable") from None
     jobs = jobs_for_event(x_github_event, payload, x_github_delivery)
     if not jobs:
@@ -75,6 +85,7 @@ async def github_webhook(
         # Free the delivery id so GitHub's redelivery is not swallowed as a duplicate.
         await redis.delete(dedupe_key)
         log.exception("webhook_failed", delivery=x_github_delivery)
+        WEBHOOKS.labels(result="error").inc()
         raise HTTPException(status_code=503, detail="temporarily unavailable") from None
 
     for job in jobs:
@@ -233,6 +244,7 @@ def _purge_job(inst: int, repo: str, delivery_id: str) -> Job:
 
 
 def _ok(status: str) -> Response:
+    WEBHOOKS.labels(result=status).inc()
     return Response(
         content=json.dumps({"status": status}), media_type="application/json", status_code=200
     )

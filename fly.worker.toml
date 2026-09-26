@@ -1,0 +1,32 @@
+# Worker: consumes the queue, calls the LLM, posts reviews. Deploy: fly deploy -c fly.worker.toml
+# Same image as the web app, different command. It serves no HTTP except Prometheus metrics.
+# NOT yet deployed by the author (no Fly account was available); see docs/runbook.md.
+app = "reviewly-worker"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[processes]
+  worker = "python -m worker.main"
+
+[env]
+  REVIEWLY_ENV = "prod"
+  REVIEWLY_LOG_LEVEL = "INFO"
+  # Load test: reviews/min scale ~linearly with slots (about 50/min per slot at 1 s model latency).
+  # Real models take 5-30 s, so size this from your own reviews/min target, not from that number.
+  REVIEWLY_WORKER_CONCURRENCY = "8"
+
+# On deploy Fly sends SIGTERM; the worker stops claiming, finishes or requeues in-flight jobs
+# (REVIEWLY_SHUTDOWN_GRACE_S, default 25 s) and exits. The kill timeout must be longer than that.
+kill_signal = "SIGTERM"
+kill_timeout = 40
+
+[metrics]
+  port = 9100
+  path = "/metrics"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["worker"]

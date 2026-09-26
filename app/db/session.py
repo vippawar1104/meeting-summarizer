@@ -8,8 +8,14 @@ from sqlalchemy.ext.asyncio import (
 )
 
 
-def make_engine(url: str) -> AsyncEngine:
-    return create_async_engine(url, pool_pre_ping=True)
+def make_engine(url: str, *, pool_size: int = 5, max_overflow: int = 5) -> AsyncEngine:
+    """Postgres pools are per process: web processes x (pool_size + max_overflow) must stay under
+    the database's connection limit. SQLite (tests) uses its own pool, which takes no such options."""
+    if url.startswith("sqlite"):
+        return create_async_engine(url, pool_pre_ping=True)
+    return create_async_engine(
+        url, pool_pre_ping=True, pool_size=pool_size, max_overflow=max_overflow
+    )
 
 
 def make_sessionmaker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:

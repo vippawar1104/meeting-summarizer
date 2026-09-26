@@ -1,0 +1,25 @@
+# Load-test overlay: fake GitHub (:9000) and fake LLM (:9001) on the host, so throughput is
+# Reviewly's own. Usage: see loadtest/README.md
+#   docker compose -f docker-compose.yml -f docker-compose.load.yml up -d --build api worker
+x-load-env: &load
+  REVIEWLY_GITHUB_API_URL: http://host.docker.internal:9000
+  REVIEWLY_GITHUB_APP_ID: "123456"
+  REVIEWLY_GITHUB_PRIVATE_KEY: ${E2E_PRIVATE_KEY}
+  REVIEWLY_GROQ_API_KEY: stub
+  REVIEWLY_GROQ_BASE_URL: http://host.docker.internal:9001/v1
+  REVIEWLY_PROVIDER_ORDER: groq:stub-primary,groq:stub-fallback
+  REVIEWLY_CACHE_ENABLED: "false"  # identical diffs would otherwise skip the LLM and flatter the numbers
+  REVIEWLY_FREE_REVIEWS_PER_MONTH: "0"
+  REVIEWLY_DAILY_TOKEN_BUDGET: "0"
+  REVIEWLY_LLM_RATE_PER_MIN: "100000"
+  REVIEWLY_LLM_RATE_BURST: "1000"
+  REVIEWLY_WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+  REVIEWLY_PER_INSTALLATION_CAP: ${PER_INSTALLATION_CAP:-2}
+  REVIEWLY_LOG_LEVEL: WARNING
+services:
+  api:
+    environment: *load
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  worker:
+    environment: *load
+    extra_hosts: ["host.docker.internal:host-gateway"]

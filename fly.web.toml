@@ -1,0 +1,42 @@
+# Web app: webhooks, dashboard, /metrics. Deploy: fly deploy -c fly.web.toml
+# NOT yet deployed by the author (no Fly account was available); see docs/runbook.md for the steps.
+app = "reviewly"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # migrations run once per release, before new machines take traffic
+  release_command = "alembic upgrade head"
+
+[env]
+  REVIEWLY_ENV = "prod"
+  REVIEWLY_LOG_LEVEL = "INFO"
+  # Load test (docs/load-test.md): one uvicorn process saturates at ~440 webhooks/s, four at ~990/s.
+  # Each process holds up to db_pool_size + db_max_overflow (10) Postgres connections.
+  WEB_CONCURRENCY = "2"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  # A webhook must never wait for a cold machine: GitHub gives up after 10 s.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 2
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 100
+    hard_limit = 250
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/readyz"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1gb"

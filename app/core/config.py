@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     max_attempts: int = 5
     backoff_base_s: float = 5.0
     backoff_cap_s: float = 300.0
+    # While every LLM provider is unavailable a job is retried without using up its attempts, so an
+    # outage does not kill reviews. It is retried about every llm_outage_retry_s (jittered) until
+    # the job is llm_outage_window_s old; only then does it count as failed.
+    llm_outage_window_s: float = 3600.0
+    llm_outage_retry_s: float = 30.0
     poll_interval_s: float = 0.2
     reconcile_interval_s: float = 30.0
     reconcile_grace_s: float = 60.0  # only re-enqueue jobs untouched for this long
@@ -40,6 +45,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     groq_model: str = "openai/gpt-oss-120b"
     mistral_model: str = "mistral-large-latest"
+    groq_base_url: str | None = None  # point Groq entries at a compatible/stub server (load tests)
     llm_timeout_s: float = 60.0
     breaker_threshold: int = 3
     breaker_cooldown_s: float = 30.0
@@ -98,6 +104,11 @@ class Settings(BaseSettings):
     review_concurrency: int = 4
     max_comments: int = 25
     log_level: str = "INFO"
+    db_pool_size: int = 5  # per process; each web worker and the worker service has its own pool
+    db_max_overflow: int = 5
+    otlp_endpoint: str | None = None  # e.g. http://collector:4318/v1/traces; unset = no tracing
+    metrics_token: str | None = None  # if set, /metrics requires `Authorization: Bearer <token>`
+    worker_metrics_port: int = 9100  # 0 disables the worker's /metrics server
 
 
 PLACEHOLDER_SECRETS = {"dev-secret", "dev-dashboard-secret-change-me"}

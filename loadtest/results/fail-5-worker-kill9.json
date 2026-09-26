@@ -1,0 +1,85 @@
+{
+  "label": "fail-5-worker-kill9",
+  "note": "docker kill (SIGKILL) of the only worker at t=9s, restarted at t=14s; 16 slots; visibility timeout 120s",
+  "webhooks": 300,
+  "installations": 25,
+  "send_concurrency": 20,
+  "webhook_status_codes": {
+    "200": 300
+  },
+  "webhook_ms": {
+    "p50": 82.9,
+    "p95": 238.7,
+    "p99": 338.7,
+    "max": 396.7
+  },
+  "burst_send_seconds": 1.59,
+  "drain_seconds": 128.9,
+  "jobs_by_status": {
+    "done": 300
+  },
+  "reviews_per_minute": 139.6,
+  "lost_jobs": 0,
+  "unfinished_jobs": 0,
+  "prs_reviewed": 300,
+  "valid": true,
+  "duplicate_reviews": 0,
+  "stub_llm_calls": {
+    "stub-primary": 1519
+  },
+  "stub_llm_failed": 0,
+  "timeline_done": [
+    [
+      1.6,
+      12
+    ],
+    [
+      11.7,
+      101
+    ],
+    [
+      21.8,
+      191
+    ],
+    [
+      31.8,
+      284
+    ],
+    [
+      41.9,
+      284
+    ],
+    [
+      52.1,
+      284
+    ],
+    [
+      62.2,
+      284
+    ],
+    [
+      72.3,
+      284
+    ],
+    [
+      82.4,
+      284
+    ],
+    [
+      92.5,
+      284
+    ],
+    [
+      102.6,
+      284
+    ],
+    [
+      112.7,
+      284
+    ],
+    [
+      122.8,
+      284
+    ]
+  ]
+}
