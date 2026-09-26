@@ -1,0 +1,81 @@
+{
+  "label": "scale-slots16",
+  "note": "worker_concurrency=16, per_installation_cap=2, stub 1000ms+-200, 25 installations",
+  "webhooks": 500,
+  "installations": 25,
+  "send_concurrency": 20,
+  "webhook_status_codes": {
+    "200": 500
+  },
+  "webhook_ms": {
+    "p50": 75.5,
+    "p95": 254.8,
+    "p99": 435.2,
+    "max": 581.2
+  },
+  "burst_send_seconds": 2.62,
+  "drain_seconds": 37.8,
+  "jobs_by_status": {
+    "done": 500
+  },
+  "reviews_per_minute": 792.9,
+  "lost_jobs": 0,
+  "unfinished_jobs": 0,
+  "prs_reviewed": 500,
+  "valid": true,
+  "duplicate_reviews": 0,
+  "stub_llm_calls": {
+    "stub-primary": 2098
+  },
+  "stub_llm_failed": 0,
+  "timeline_done": [
+    [
+      2.6,
+      17
+    ],
+    [
+      5.7,
+      63
+    ],
+    [
+      8.7,
+      105
+    ],
+    [
+      11.7,
+      146
+    ],
+    [
+      14.7,
+      189
+    ],
+    [
+      17.7,
+      228
+    ],
+    [
+      20.7,
+      268
+    ],
+    [
+      23.8,
+      310
+    ],
+    [
+      26.8,
+      353
+    ],
+    [
+      29.8,
+      393
+    ],
+    [
+      32.8,
+      431
+    ],
+    [
+      35.8,
+      472
+    ]
+  ]
+}

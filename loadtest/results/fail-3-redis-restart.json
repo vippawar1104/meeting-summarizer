@@ -1,0 +1,85 @@
+{
+  "label": "fail-3-redis-restart",
+  "note": "docker compose restart redis at t=9s (AOF on), 16 slots, 300 PRs",
+  "webhooks": 300,
+  "installations": 25,
+  "send_concurrency": 20,
+  "webhook_status_codes": {
+    "200": 300
+  },
+  "webhook_ms": {
+    "p50": 83.8,
+    "p95": 260.1,
+    "p99": 417.0,
+    "max": 436.4
+  },
+  "burst_send_seconds": 1.68,
+  "drain_seconds": 129.1,
+  "jobs_by_status": {
+    "done": 300
+  },
+  "reviews_per_minute": 139.5,
+  "lost_jobs": 0,
+  "unfinished_jobs": 0,
+  "prs_reviewed": 300,
+  "valid": true,
+  "duplicate_reviews": 0,
+  "stub_llm_calls": {
+    "stub-primary": 312
+  },
+  "stub_llm_failed": 0,
+  "timeline_done": [
+    [
+      1.7,
+      12
+    ],
+    [
+      11.8,
+      137
+    ],
+    [
+      21.9,
+      287
+    ],
+    [
+      32.0,
+      287
+    ],
+    [
+      42.1,
+      287
+    ],
+    [
+      52.2,
+      287
+    ],
+    [
+      62.3,
+      287
+    ],
+    [
+      72.4,
+      287
+    ],
+    [
+      82.6,
+      287
+    ],
+    [
+      92.7,
+      287
+    ],
+    [
+      102.8,
+      287
+    ],
+    [
+      112.9,
+      287
+    ],
+    [
+      123.0,
+      287
+    ]
+  ]
+}

@@ -20,8 +20,15 @@ def build_router(settings: Settings, http: httpx.AsyncClient) -> LLMRouter:
         name, _, model_override = entry.partition(":")
         key, default_model, cls = keys.get(name, (None, "", None))
         if key and cls:
+            extra = {"base_url": settings.groq_base_url} if name == "groq" else {}
             providers.append(
-                cls(key, model_override or default_model, http, timeout=settings.llm_timeout_s)
+                cls(
+                    key,
+                    model_override or default_model,
+                    http,
+                    timeout=settings.llm_timeout_s,
+                    **extra,
+                )
             )
     return LLMRouter(
         providers,

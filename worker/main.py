@@ -3,12 +3,16 @@ import signal
 
 import httpx
 import structlog
+from prometheus_client import start_http_server
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings, get_settings
 from app.core.crypto import DEV_KEY, SecretBox
 from app.core.logging import configure_logging
+from app.core.metrics import registry
+from app.core.redis import make_redis
+from app.core.tracing import configure_tracing
 from app.cost.budget import TokenBudget
 from app.cost.cache import ReviewCache
 from app.cost.guard import GuardedRouter
@@ -155,9 +159,16 @@ async def reconcile_loop(
 async def run() -> None:
     settings = get_settings()
     configure_logging(settings.log_level)
-    engine = make_engine(settings.database_url)
+    configure_tracing(settings.otlp_endpoint, "reviewly-worker")
+    if settings.worker_metrics_port:
+        start_http_server(settings.worker_metrics_port, registry=registry)
+    engine = make_engine(
+        settings.database_url,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+    )
     sm = make_sessionmaker(engine)
-    redis = Redis.from_url(settings.redis_url)
+    redis = make_redis(settings.redis_url)
     queue = RedisJobQueue(redis, prefix=settings.queue_prefix)
     http = httpx.AsyncClient()
     store = PgChunkStore(sm)

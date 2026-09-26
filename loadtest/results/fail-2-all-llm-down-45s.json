@@ -1,0 +1,90 @@
+{
+  "label": "fail-2-all-llm-down-45s",
+  "note": "AFTER fix: every model 503 from t=2s to t=47s; 16 slots",
+  "webhooks": 100,
+  "installations": 25,
+  "send_concurrency": 20,
+  "webhook_status_codes": {
+    "200": 100
+  },
+  "webhook_ms": {
+    "p50": 99.6,
+    "p95": 224.4,
+    "p99": 376.4,
+    "max": 376.4
+  },
+  "burst_send_seconds": 0.61,
+  "drain_seconds": 105.8,
+  "jobs_by_status": {
+    "done": 100
+  },
+  "reviews_per_minute": 56.7,
+  "lost_jobs": 0,
+  "unfinished_jobs": 0,
+  "prs_reviewed": 100,
+  "valid": true,
+  "duplicate_reviews": 0,
+  "stub_llm_calls": {
+    "stub-primary": 116,
+    "stub-fallback": 19
+  },
+  "stub_llm_failed": 35,
+  "timeline_done": [
+    [
+      0.6,
+      0
+    ],
+    [
+      8.7,
+      17
+    ],
+    [
+      16.8,
+      17
+    ],
+    [
+      24.9,
+      17
+    ],
+    [
+      33.0,
+      17
+    ],
+    [
+      41.1,
+      17
+    ],
+    [
+      49.2,
+      17
+    ],
+    [
+      57.2,
+      17
+    ],
+    [
+      65.3,
+      17
+    ],
+    [
+      73.4,
+      45
+    ],
+    [
+      81.5,
+      72
+    ],
+    [
+      89.5,
+      84
+    ],
+    [
+      97.6,
+      93
+    ],
+    [
+      105.8,
+      100
+    ]
+  ]
+}

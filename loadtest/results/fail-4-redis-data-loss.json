@@ -1,0 +1,86 @@
+{
+  "label": "fail-4-redis-data-loss",
+  "note": "redis FLUSHALL at t=9s (all queue state lost), 16 slots, 300 PRs",
+  "webhooks": 300,
+  "installations": 25,
+  "send_concurrency": 20,
+  "webhook_status_codes": {
+    "500": 11,
+    "200": 289
+  },
+  "webhook_ms": {
+    "p50": 89.7,
+    "p95": 235.5,
+    "p99": 351.6,
+    "max": 403.7
+  },
+  "burst_send_seconds": 1.65,
+  "drain_seconds": 500.9,
+  "jobs_by_status": {
+    "done": 289
+  },
+  "reviews_per_minute": 34.6,
+  "lost_jobs": 0,
+  "unfinished_jobs": 11,
+  "prs_reviewed": 289,
+  "valid": true,
+  "duplicate_reviews": 0,
+  "stub_llm_calls": {
+    "stub-primary": 601
+  },
+  "stub_llm_failed": 0,
+  "timeline_done": [
+    [
+      1.7,
+      16
+    ],
+    [
+      43.1,
+      121
+    ],
+    [
+      84.4,
+      289
+    ],
+    [
+      125.9,
+      289
+    ],
+    [
+      167.3,
+      289
+    ],
+    [
+      208.8,
+      289
+    ],
+    [
+      250.2,
+      289
+    ],
+    [
+      291.7,
+      289
+    ],
+    [
+      333.1,
+      289
+    ],
+    [
+      374.5,
+      289
+    ],
+    [
+      416.0,
+      289
+    ],
+    [
+      457.4,
+      289
+    ],
+    [
+      498.9,
+      289
+    ]
+  ]
+}

@@ -42,9 +42,12 @@ class BadRequest(LLMError):
 
 
 class AllProvidersFailed(LLMError):
-    def __init__(self, errors: list[str]) -> None:
+    def __init__(self, errors: list[str], *, outage: bool = False) -> None:
         super().__init__("all LLM providers failed: " + "; ".join(errors))
         self.errors = errors
+        # True when at least one provider was unavailable (down, rate limited, breaker open), so
+        # trying again later can succeed. False when every provider rejected the request itself.
+        self.outage = outage
 
 
 class Completer(Protocol):

@@ -1,7 +1,20 @@
 # Reviewly
 
-AI pull request reviewer delivered as a GitHub App. Work in progress: see milestone status below.
-No performance or quality numbers are published here until they have been measured.
+AI pull request reviewer delivered as a GitHub App. Every number in this README was measured (see the limits next to each one).
+
+```
+GitHub --webhook--> API (verify HMAC, dedupe, insert job, enqueue) --> Postgres (source of truth: jobs, findings, usage)
+                                   |                                        ^
+                                   v                                        | reconciler re-enqueues lost jobs
+                               Redis queue (fair per installation, retries, DLQ, visibility timeout)
+                                   |
+                                   v
+                    Worker: diff -> filter -> redact -> LLM (fallback + circuit breaker) -> verify lines -> rank
+                                   |                          ^ optional repo context (pgvector + full-text)
+                                   v
+                     one batched GitHub review  -->  dashboard, feedback (dismiss/accept), billing
+```
+Operations: [docs/runbook.md](docs/runbook.md). Load and failure tests: [docs/load-test.md](docs/load-test.md).
 
 ## Local dev
 ```
@@ -19,7 +32,13 @@ make up        # docker compose: postgres+pgvector, redis, migrate, api, worker
 - [x] M5 secret redaction, injection hardening, per-installation token budget and rate limit, review cache, partial-review handling
 - [x] M6 evaluation harness: 58 labeled cases, metrics with confidence intervals, record/replay, CI gate. Gemini numbers pending (needs an API key)
 - [x] M7 dashboard (React + TypeScript, black on white with dark mode), feedback loop, usage metering, free tier, Stripe test-mode checkout
-- [ ] M8 observability, load test, deploy
+- [x] M8 observability (Prometheus, OpenTelemetry), load and failure tests with measured results, Fly.io config and runbook (not yet deployed)
+
+## Performance (measured on one laptop, stub LLM; details and limits in [docs/load-test.md](docs/load-test.md))
+- Webhook endpoint: p99 64 ms at 10 concurrent senders on one process; about 440 requests/s per process; 4 processes about 990/s (p99 83 ms at 25 senders).
+- 500 PRs drained with no lost jobs and no duplicate reviews at 4, 8, 16 and 32 worker slots: 226, 446, 881 and 1576 reviews/min with a 1 s model (real models are slower).
+- Survived, with every PR reviewed exactly once: primary model down, all models down for 45 s, Redis restart, Redis wiped, worker `kill -9`.
+- Real-model quality numbers are in the Evaluation section. Nothing was run against real GitHub or on Fly.io.
 
 ## Using Reviewly
 **As a user (no setup):** install the GitHub App on your repositories, then open a pull request. Reviewly reads the diff and posts one

@@ -25,6 +25,9 @@ dependencies = [
   "tree-sitter-go>=0.25.0",
   "tree-sitter-java>=0.23.5",
   "pgvector>=0.5.0",
+  "opentelemetry-api>=1.45.0",
+  "opentelemetry-sdk>=1.45.0",
+  "opentelemetry-exporter-otlp-proto-http>=1.45.0",
 ]
 
 [dependency-groups]
@@ -36,6 +39,7 @@ dev = [
   "mypy>=1.10",
   "types-pyyaml>=6.0.12.20260906",
   "hypothesis>=6.168.1",
+  "locust>=2.46.6",
 ]
 
 [tool.ruff]
