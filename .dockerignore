@@ -3,3 +3,6 @@
 .env*
 node_modules
 __pycache__
+dashboard/node_modules
+dashboard/dist
+tests

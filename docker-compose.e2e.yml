@@ -1,0 +1,10 @@
+# Local end-to-end: point the worker at scripts/mock_github.py running on the host.
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d worker api
+services:
+  worker:
+    env_file: [.env]  # your LLM key(s)
+    environment:
+      REVIEWLY_GITHUB_API_URL: http://host.docker.internal:9000
+      REVIEWLY_GITHUB_APP_ID: "123456"
+      REVIEWLY_GITHUB_PRIVATE_KEY: ${E2E_PRIVATE_KEY}
+    extra_hosts: ["host.docker.internal:host-gateway"]

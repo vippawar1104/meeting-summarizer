@@ -70,6 +70,27 @@ class Settings(BaseSettings):
     redaction_enabled: bool = True
     injection_findings: bool = True  # flag added lines that try to instruct the AI reviewer
 
+    # Billing (Stripe test mode) and free tier
+    free_reviews_per_month: int = (
+        20  # per installation; 0 = unlimited. A placeholder, not a pricing decision
+    )
+    public_url: str = "http://localhost:8000"
+    stripe_secret_key: str | None = None
+    stripe_price_id: str | None = None
+    stripe_webhook_secret: str | None = None
+
+    # Users' own LLM keys are stored encrypted with this (comma-separated to rotate). Required outside dev.
+    encryption_key: str | None = None
+    # Onboarding: where users install the GitHub App, and the operator's one-time app-creation page
+    github_app_slug: str | None = None
+    setup_token: str | None = None
+
+    # Dashboard
+    dashboard_secret: str = "dev-dashboard-secret-change-me"  # signs session cookies
+    dashboard_dev_login: bool = False  # local-only login without a GitHub OAuth app
+    github_oauth_client_id: str | None = None
+    github_oauth_client_secret: str | None = None
+
     # Review pipeline
     prompt_version: str = "v3"  # v3 scored significantly better than v1 (see README, eval/)
     max_group_chars: int = 12_000  # one LLM call reviews at most this much diff text
@@ -77,6 +98,29 @@ class Settings(BaseSettings):
     review_concurrency: int = 4
     max_comments: int = 25
     log_level: str = "INFO"
+
+
+PLACEHOLDER_SECRETS = {"dev-secret", "dev-dashboard-secret-change-me"}
+
+
+def insecure_settings(settings: Settings) -> list[str]:
+    """Problems that must stop the app from starting anywhere but a developer's laptop."""
+    if settings.env == "dev":
+        return []
+    problems = []
+    if settings.github_webhook_secret in PLACEHOLDER_SECRETS:
+        problems.append("REVIEWLY_GITHUB_WEBHOOK_SECRET is still the placeholder")
+    if settings.dashboard_secret in PLACEHOLDER_SECRETS or len(settings.dashboard_secret) < 32:
+        problems.append(
+            "REVIEWLY_DASHBOARD_SECRET must be a random string of at least 32 characters"
+        )
+    if not settings.encryption_key:
+        problems.append(
+            "REVIEWLY_ENCRYPTION_KEY is required (generate one: python -m app.core.crypto)"
+        )
+    if settings.dashboard_dev_login:
+        problems.append("REVIEWLY_DASHBOARD_DEV_LOGIN must not be enabled outside dev")
+    return problems
 
 
 @lru_cache

@@ -1,23 +1,31 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlmodel import col
 
+from app.billing.plans import PlanStatus, plan_status
+from app.billing.usage import record_review
 from app.core.config import Settings
 from app.cost.cache import ReviewCache
 from app.cost.guard import BudgetExceeded, current_installation
 from app.db.models import FindingRow, Job
+from app.feedback.apply import suppressed_fingerprints
 from app.github.client import GitHubClient, GitHubNotFound, GitHubValidation
 from app.github.diff import parse_diff
-from app.llm.base import Completer
+from app.llm.base import Completer, RouterLike
+from app.llm.byok import ByokError
 from app.pipeline.config import RepoConfig, parse_repo_config
 from app.pipeline.filter import filter_files
 from app.pipeline.findings import Category, Finding, Severity, parse_findings
 from app.pipeline.hunks import HunkGroup, group_files, select_within_budget
 from app.pipeline.merge import MergeStats, merge_findings
 from app.pipeline.post import (
+    FINDING_MARKER_RE,
     SummaryInfo,
     build_review_payload,
     build_summary,
@@ -77,9 +85,10 @@ class ReviewPipeline:
         sessionmaker: async_sessionmaker[AsyncSession],
         retriever: Retriever | None = None,
         cache: ReviewCache | None = None,
+        byok: Callable[[int], Awaitable[tuple[RouterLike, str] | None]] | None = None,
     ) -> None:
         self._gh, self._router, self._s, self._sm = github, router, settings, sessionmaker
-        self._retriever, self._cache = retriever, cache
+        self._retriever, self._cache, self._byok = retriever, cache, byok
         if retriever is not None and settings.prompt_version == "v1":
             raise ValueError(
                 "repository context needs prompt v2 or later (v1 does not describe it)"
@@ -97,6 +106,17 @@ class ReviewPipeline:
             # A retry after a partial failure must not post a second review.
             if has_review_marker(await self._gh.list_reviews(inst, repo, number), job.head_sha):
                 raise SkipJob("already reviewed")
+            own = await self._own_router(job)
+            if own is None and not getattr(self._router, "providers", True):
+                await self._byok_notice(job, "No AI model is available for this installation.")
+                raise SkipJob("no AI model configured: add your own API key in the dashboard")
+            if (
+                own is None
+            ):  # their own key means their own bill: the free tier is for platform models
+                plan = await plan_status(self._sm, self._s, inst)
+                if not plan.allowed:
+                    await self._limit_notice(job, plan)
+                    raise SkipJob("free-tier monthly review limit reached")
 
             diff_text = await self._gh.get_diff(inst, repo, number)
             # Config comes from the BASE branch: a PR must not be able to rewrite its own rules.
@@ -107,7 +127,7 @@ class ReviewPipeline:
 
         token = current_installation.set(inst)  # LLM calls below are metered to this installation
         try:
-            return await self._review(job, pr, diff_text, config, config_warning)
+            return await self._review(job, pr, diff_text, config, config_warning, own)
         finally:
             current_installation.reset(token)
 
@@ -118,9 +138,15 @@ class ReviewPipeline:
         diff_text: str,
         config: RepoConfig,
         config_warning: str | None,
+        own: tuple[RouterLike, str] | None = None,
     ) -> ReviewOutcome:
         inst, repo, number = job.installation_id, job.repo_full_name, job.pr_number
         title = pr.get("title") or ""
+        router: Completer = own[0] if own else self._router
+        model_tag = own[1] if own else "platform"
+        # Repo-context search embeds and reranks with the platform's providers; a BYOK installation's
+        # code goes only to the provider it chose, so retrieval is skipped for it.
+        retriever = None if own else self._retriever
 
         parsed = parse_diff(diff_text)
         # Scan for injection attempts on the raw text, then redact: nothing below (prompts, context
@@ -146,8 +172,10 @@ class ReviewPipeline:
             injection_signals=len(signals) + len(title_labels) + (1 if red.hidden_chars else 0),
         )
         changed_paths = {f.path for f in parsed} | {f.old_path for f in parsed if f.old_path}
-        feedback = await self._feedback(job, changed_paths) if self._retriever else None
-        results = await self._review_all(chosen, title, config, job, changed_paths, feedback)
+        feedback = await self._feedback(job, changed_paths) if retriever else None
+        results = await self._review_all(
+            chosen, title, config, job, changed_paths, feedback, router, retriever, model_tag
+        )
         try:
             findings = self._collect(results, out)
         except _AllSkippedForBudget:
@@ -163,6 +191,7 @@ class ReviewPipeline:
             valid_lines=valid_lines,
             min_confidence=config.min_confidence,
             max_comments=max_comments,
+            suppressed=await self._suppressed(job),
         )
         out.merge, out.posted = stats, final
 
@@ -193,6 +222,7 @@ class ReviewPipeline:
             )
         out.review_id = review.get("id")
         await self._persist(job, out)
+        await self._after_post(job, out)
         log.info(
             "review_posted",
             job_id=job.id,
@@ -219,15 +249,18 @@ class ReviewPipeline:
         job: Job,
         changed_paths: set[str],
         feedback: FeedbackContext | None,
+        router: Completer,
+        retriever: Retriever | None,
+        model_tag: str,
     ) -> list[GroupResult | BaseException]:
         sem = asyncio.Semaphore(self._s.review_concurrency)
 
         async def one(g: HunkGroup) -> GroupResult:
             async with sem:
                 context, extra = [], None
-                if self._retriever is not None:
+                if retriever is not None:
                     try:  # missing context must never fail a review
-                        extra = await self._retriever.retrieve(
+                        extra = await retriever.retrieve(
                             job.installation_id, job.repo_full_name, g, changed_paths
                         )
                         context = extra.chunks
@@ -245,13 +278,14 @@ class ReviewPipeline:
                         config.rules,
                         render_context(context) if context else "",
                         render_feedback(feedback) if feedback else "",
+                        model_tag,
                     )
                     hit = await self._cache_get(job.installation_id, key)
                     if hit is not None:
                         cached = parse_findings(hit)
                         if not cached.errors:
                             return GroupResult(findings=cached.findings, cache_hit=True)
-                result = await review_group(self._router, self._system, user)
+                result = await review_group(router, self._system, user)
                 if key is not None and result.clean:
                     await self._cache_put(job.installation_id, key, result.raw_text)
                 if extra is not None:
@@ -262,6 +296,93 @@ class ReviewPipeline:
                 return result
 
         return list(await asyncio.gather(*(one(g) for g in groups), return_exceptions=True))
+
+    async def _own_router(self, job: Job) -> tuple[RouterLike, str] | None:
+        """The installation's own provider, if it configured one. If it is configured but broken we
+        stop and say so: silently falling back to Reviewly's models would send their code to a
+        provider they did not choose and spend the platform's tokens."""
+        if self._byok is None:
+            return None
+        try:
+            return await self._byok(job.installation_id)
+        except ByokError as exc:
+            await self._byok_notice(job, str(exc))
+            raise SkipJob("the installation's own API key configuration is invalid") from None
+
+    async def _byok_notice(self, job: Job, reason: str) -> None:
+        body = (
+            f"**Reviewly** could not review this pull request. {reason} Update it in the dashboard "
+            f"({self._s.public_url}/) and push a new commit.\n\n<!-- reviewly:byok:{job.head_sha} -->"
+        )
+        try:
+            await self._gh.create_comment(
+                job.installation_id, job.repo_full_name, job.pr_number, body
+            )
+        except Exception:
+            log.exception("byok_notice_failed", job_id=job.id)
+
+    async def _suppressed(self, job: Job) -> frozenset[str]:
+        try:
+            return await suppressed_fingerprints(self._sm, job.installation_id, job.repo_full_name)
+        except Exception:
+            log.exception("suppression_lookup_failed", job_id=job.id)  # never block a review
+            return frozenset()
+
+    async def _limit_notice(self, job: Job, plan: PlanStatus) -> None:
+        body = (
+            f"**Reviewly** did not review this pull request: this installation has used its "
+            f"{plan.limit} free reviews for this month. Upgrade at "
+            f"{self._s.public_url}/ to keep getting reviews, or wait for the monthly reset."
+            f"\n\n<!-- reviewly:limit:{job.head_sha} -->"
+        )
+        try:
+            await self._gh.create_comment(
+                job.installation_id, job.repo_full_name, job.pr_number, body
+            )
+        except Exception:
+            log.exception("limit_notice_failed", job_id=job.id)
+
+    async def _after_post(self, job: Job, out: ReviewOutcome) -> None:
+        """Best effort, after the review is already on GitHub: never fail the job over bookkeeping."""
+        try:
+            await record_review(
+                self._sm,
+                job.installation_id,
+                prompt_tokens=out.prompt_tokens,
+                completion_tokens=out.completion_tokens,
+                cost_usd=out.cost_usd,
+                findings=len(out.posted),
+            )
+        except Exception:
+            log.exception("usage_record_failed", job_id=job.id)
+        if out.review_id and out.posted:
+            await self._link_comments(job, out.review_id)
+
+    async def _link_comments(self, job: Job, review_id: int) -> None:
+        """Remember which GitHub comment carries which finding, so reactions and replies can be
+        traced back to it. The comment body holds a hidden fingerprint marker to match on."""
+        try:
+            comments = await self._gh.list_review_comments(
+                job.installation_id, job.repo_full_name, job.pr_number, review_id
+            )
+        except Exception:
+            log.exception("comment_link_failed", job_id=job.id)
+            return
+        ids: dict[str, list[int]] = {}
+        for c in comments:
+            m = FINDING_MARKER_RE.search(c.get("body") or "")
+            if m:
+                ids.setdefault(m[1], []).append(int(c["id"]))
+        async with self._sm() as s:
+            rows = (
+                (await s.execute(select(FindingRow).where(col(FindingRow.job_id) == job.id)))
+                .scalars()
+                .all()
+            )
+            for row in rows:
+                if ids.get(row.fingerprint):
+                    row.github_comment_id = ids[row.fingerprint].pop(0)
+            await s.commit()
 
     async def _cache_get(self, inst: int, key: str) -> str | None:
         try:

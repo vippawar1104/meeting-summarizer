@@ -23,7 +23,8 @@ class GitHubAppAuth:
         api_url: str = "https://api.github.com",
         clock: Callable[[], float] = time.time,
     ) -> None:
-        self._app_id, self._key, self._http, self._redis = app_id, private_key, http, redis
+        self._app_id, self._http, self._redis = app_id, http, redis
+        self._key = private_key.replace("\\n", "\n")  # also accept a one-line key with literal \n
         self._api, self._clock = api_url, clock
         self._locks: dict[int, asyncio.Lock] = {}
 

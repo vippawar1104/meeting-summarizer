@@ -18,8 +18,33 @@ make up        # docker compose: postgres+pgvector, redis, migrate, api, worker
 - [x] M4 repo index (tree-sitter chunks, pgvector + full-text), hybrid retrieval with RRF, LLM reranker, maintainer-feedback context. Off by default (`REVIEWLY_RAG_ENABLED`): its effect on review quality is not measured yet, that is M6
 - [x] M5 secret redaction, injection hardening, per-installation token budget and rate limit, review cache, partial-review handling
 - [x] M6 evaluation harness: 58 labeled cases, metrics with confidence intervals, record/replay, CI gate. Gemini numbers pending (needs an API key)
-- [ ] M7 dashboard, feedback, billing
+- [x] M7 dashboard (React + TypeScript, black on white with dark mode), feedback loop, usage metering, free tier, Stripe test-mode checkout
 - [ ] M8 observability, load test, deploy
+
+## Using Reviewly
+**As a user (no setup):** install the GitHub App on your repositories, then open a pull request. Reviewly reads the diff and posts one
+review with inline comments and suggested fixes, usually within a minute. Sign in to the dashboard to see reviews, findings and
+precision. Reply `@reviewly dismiss` or `@reviewly accept` to a comment (or react 👍/👎) and it learns what your team wants.
+
+**Use your own AI model.** In the dashboard, open *AI model*, pick a provider (OpenAI, Anthropic, Google Gemini, Groq, Mistral, or any
+OpenAI-compatible endpoint such as OpenRouter), type the model name, paste your API key and press *Save and test key*. The key is checked
+with a real call before it is saved, encrypted at rest (Fernet), never shown again (only its last four characters), and used only to review
+your repositories. With your own key: your code goes to the provider you chose and never to Reviewly's, there is no fallback to Reviewly's
+models if your key fails (the PR gets a notice instead), and reviews don't count against the free plan. Custom endpoints must be public
+`https` URLs (private and internal addresses are refused). Repo-context search is skipped for these installations.
+
+**Hosting it yourself**
+1. `make up` (local) or deploy the same images with Postgres (pgvector) and Redis.
+2. Set `REVIEWLY_ENV=prod`, `REVIEWLY_PUBLIC_URL`, `REVIEWLY_GITHUB_WEBHOOK_SECRET`, `REVIEWLY_DASHBOARD_SECRET` (32+ random chars),
+   `REVIEWLY_ENCRYPTION_KEY` (`python -m app.core.crypto`) and `REVIEWLY_SETUP_TOKEN` (any random string). The app refuses to start otherwise.
+3. Open `https://your-host/setup?token=<REVIEWLY_SETUP_TOKEN>` and press the button. GitHub creates the App with every setting pre-filled and
+   this page shows its credentials once as environment variables. Put them in your host's secrets, remove `REVIEWLY_SETUP_TOKEN`, restart.
+4. Add at least one platform model key (for example `REVIEWLY_GROQ_API_KEY`), or leave the platform without one so every installation must
+   bring its own. Then install the App on a repo and open a PR.
+
+**Try the whole system locally without GitHub:** `scripts/mock_github.py` is a fake GitHub API and `scripts/e2e_local.py` sends a PR through
+webhook, queue, worker and your real LLM key (`docker-compose.e2e.yml`). One run of a real bug case produced a review with the correct inline
+comment and fix suggestion in about 3 seconds.
 
 ## Repo context (M4) design notes
 - Indexed per push to the default branch; incremental by git blob SHA, so unchanged files are never re-fetched or re-embedded.
@@ -88,3 +113,44 @@ failed after retries and its row covers only the cases that scored).
 - Latency includes waiting out Groq's per-minute rate limits while several runs shared the budget, so treat it as an upper bound.
 - Cost columns are n/a: no verified price for these models.
 - Remaining false alarms are mostly confident speculation (0.93 to 0.95). The next improvement to try is a second verification pass that re-checks each finding against the visible diff.
+
+## Dashboard, feedback and billing (M7)
+**Run it locally with demo data**
+```
+make up                     # postgres, redis, migrations, api (serves the dashboard), worker
+make seed                   # fake installation 42 with reviews, findings and feedback (dev only)
+open "http://localhost:8000/auth/dev-login?installation=42"
+```
+`dev-login` exists only when `REVIEWLY_ENV=dev` and `REVIEWLY_DASHBOARD_DEV_LOGIN=true`; the app refuses to start outside dev
+with placeholder secrets or with dev login on. Frontend work: `make dashboard-dev` (Vite, proxies to :8000) and `make dashboard-test`.
+
+**The dashboard** is one page, black on white (white on black in dark mode, following the system until you press the toggle):
+summary tiles, plan and usage, precision by rule, reviews per month (with a table view), repositories, and recent reviews.
+Every query is scoped to one installation, and another tenant's installation returns 404.
+
+**Feedback loop.** Reviewly learns what maintainers think of its comments from:
+- a reply `@reviewly dismiss` or `@reviewly accept` (a deliberate command always outranks reactions),
+- reactions on its comment (👍 ❤️ 🎉 🚀 accept; 👎 😕 dismiss; bots ignored), polled every 10 minutes because GitHub sends no webhook for reactions,
+- resolving a thread, which is shown but **not** counted in precision (people resolve threads for many reasons).
+
+Precision per rule (category) is `accepted / (accepted + dismissed)` and is shown as a dash, never 0% or 100%, until something is judged.
+A finding a repo's maintainers have dismissed at least twice and never accepted is suppressed there from then on.
+
+**Free tier and billing.** Each installation gets `REVIEWLY_FREE_REVIEWS_PER_MONTH` reviews per UTC month (default 20, a placeholder;
+0 = unlimited). Over the limit, the PR gets a short notice and no tokens are spent. Stripe test-mode Checkout upgrades an installation;
+signed webhooks (`/webhooks/stripe`, timestamp-checked against replay) keep the subscription in sync, with a 3-day grace for failed payments.
+
+**Not verified against the real services** (no credentials were available): GitHub OAuth login, the reaction polling and
+comment linking against GitHub itself, and Stripe Checkout and its webhooks. All are covered by tests with mocked HTTP; the
+feedback webhook, dashboard API, tenant isolation and a comment id above 2^31 were exercised live against Postgres.
+Cost figures show "n/a" because there is no verified price for the models in use.
+
+## Bring your own key: safety notes
+- **Encryption:** keys are stored with Fernet (`REVIEWLY_ENCRYPTION_KEY`, comma-separated to rotate: the first key encrypts, all decrypt).
+  Losing the key makes stored keys unreadable; affected installations are told to re-enter theirs instead of silently using Reviewly's models.
+- **SSRF:** a custom endpoint must be `https`, on a public hostname whose every DNS answer is a public address, checked when saved and again
+  before each use. A hostile DNS server could still change its answer between the check and the connection (DNS rebinding); pin the connection
+  to the checked address if you host this for untrusted users.
+- **Abuse:** each save/test makes a real call to a user-chosen endpoint, so it is limited to 10 per installation per hour.
+- **Not verified:** the Anthropic, OpenAI and custom-endpoint adapters have only been exercised against mocked HTTP. Groq was exercised live
+  (a wrong key was refused; the real key saved; the next review used the chosen model).

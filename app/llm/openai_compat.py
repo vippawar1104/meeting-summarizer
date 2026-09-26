@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 
 from app.llm.base import BadRequest, LLMResult, Message, ProviderUnavailable
@@ -24,6 +26,16 @@ class OpenAICompatProvider:
         self._url = f"{base_url or self.default_base_url}/chat/completions"
         self._timeout = timeout
 
+    async def _post(self, body: dict[str, object]) -> dict[str, Any]:
+        return await post_json(
+            self._http,
+            self._url,
+            headers={"Authorization": f"Bearer {self._key}"},
+            body=body,
+            timeout_s=self._timeout,
+            provider=self.name,
+        )
+
     async def complete(self, messages: list[Message], *, json_mode: bool = True) -> LLMResult:
         body: dict[str, object] = {
             "model": self.model,
@@ -32,14 +44,14 @@ class OpenAICompatProvider:
         }
         if json_mode:
             body["response_format"] = {"type": "json_object"}
-        data = await post_json(
-            self._http,
-            self._url,
-            headers={"Authorization": f"Bearer {self._key}"},
-            body=body,
-            timeout_s=self._timeout,
-            provider=self.name,
-        )
+        try:
+            data = await self._post(body)
+        except BadRequest as exc:
+            # Some newer models (e.g. OpenAI reasoning models) reject a custom temperature.
+            if "temperature" not in str(exc).lower():
+                raise
+            body.pop("temperature", None)
+            data = await self._post(body)
         choices = data.get("choices") or []
         if not choices:
             raise ProviderUnavailable(f"{self.name} returned no choices")
@@ -65,3 +77,14 @@ class GroqProvider(OpenAICompatProvider):
 class MistralProvider(OpenAICompatProvider):
     name = "mistral"
     default_base_url = "https://api.mistral.ai/v1"
+
+
+class OpenAIProvider(OpenAICompatProvider):
+    name = "openai"
+    default_base_url = "https://api.openai.com/v1"
+
+
+class CustomProvider(OpenAICompatProvider):
+    """Any OpenAI-compatible endpoint the user supplies (OpenRouter, Together, DeepSeek, vLLM...)."""
+
+    name = "custom"
