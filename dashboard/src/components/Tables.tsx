@@ -66,7 +66,10 @@ export function RecentTable({ recent, now }: { recent: RecentReview[]; now?: Dat
             return (
               <tr key={`${r.repo}#${r.pr}@${r.sha}@${r.at}`}>
                 <td>
-                  {r.repo}#{r.pr} <span className="muted">{r.sha}</span>
+                  <a className="inline-link" href={`https://github.com/${r.repo}/pull/${r.pr}`} target="_blank" rel="noopener noreferrer">
+                    {r.repo}#{r.pr}
+                  </a>{" "}
+                  <span className="muted">{r.sha}</span>
                 </td>
                 <td title={r.note ?? undefined}>
                   <span className={`status ${s.cls}`}>

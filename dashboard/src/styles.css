@@ -203,3 +203,34 @@ code { font-size: 12px; background: var(--badge); padding: 1px 5px; border-radiu
 .dev-login { display: grid; gap: 8px; justify-items: center; padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--card); }
 .dev-login label { display: grid; gap: 4px; font-size: 12px; color: var(--ink-3); text-align: left; }
 .dev-login input { font: inherit; font-size: 13px; width: 130px; padding: 6px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--ink); }
+
+/* navigation, skeletons, small polish */
+.nav { display: flex; gap: 2px; margin-left: 14px; }
+.nav a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; color: var(--ink-3); text-decoration: none; font-size: 12.5px; }
+.nav a:hover { color: var(--ink); background: var(--badge); }
+.nav a[aria-current="page"] { color: var(--ink); background: var(--badge); font-weight: 600; }
+.who { color: var(--ink-3); font-size: 12px; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+.toolbar .muted { font-size: 12px; }
+.page-title { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; margin: 22px 0 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 8px; top: -40px; z-index: 10; background: var(--ink); color: var(--page); padding: 6px 12px; border-radius: 8px; text-decoration: none; }
+.skip:focus { top: 8px; }
+.sk { display: block; border-radius: 6px; background: var(--track); }
+.sk-icon { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 10px; }
+.sk-line { height: 10px; width: 60%; margin-bottom: 8px; }
+.sk-line.short { width: 35%; }
+.sk-value { height: 20px; width: 40%; }
+.sk-block { padding: 16px; margin-top: 28px; }
+.skeleton { margin-top: 28px; }
+.footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .sk { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+}
+@media (max-width: 720px) {
+  .hide-narrow { display: none; }
+  .nav { margin-left: 4px; }
+  .header { gap: 6px; }
+}
+.row { display: inline-flex; align-items: center; gap: 10px; }

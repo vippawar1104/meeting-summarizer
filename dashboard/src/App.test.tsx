@@ -17,6 +17,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 
 beforeEach(() => {
   localStorage.clear();
+  window.location.hash = "";
   delete document.documentElement.dataset.theme;
   vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }));
 });
@@ -69,6 +70,7 @@ describe("signed in", () => {
   });
 
   it("shows the plan, its meter and the upgrade button", async () => {
+    window.location.hash = "#/settings";
     mockApi(loggedIn);
     render(<App />);
     const plan = await screen.findByRole("region", { name: "Plan" });
@@ -78,6 +80,7 @@ describe("signed in", () => {
   });
 
   it("does not offer an upgrade to a paying installation", async () => {
+    window.location.hash = "#/settings";
     mockApi({ ...loggedIn, "GET /api/installations/42/overview": () => json({ ...overview, plan: { name: "pro", limit: null, used: 30 } }) });
     render(<App />);
     expect(await screen.findByText("Pro plan")).toBeInTheDocument();
@@ -94,6 +97,7 @@ describe("signed in", () => {
   });
 
   it("starts checkout and sends the browser to Stripe", async () => {
+    window.location.hash = "#/settings";
     const assign = vi.fn();
     vi.stubGlobal("location", { ...window.location, assign });
     const fetchMock = mockApi({ ...loggedIn, "POST /api/installations/42/billing/checkout": () => json({ url: "https://checkout.stripe.com/c/x" }) });
@@ -104,6 +108,7 @@ describe("signed in", () => {
   });
 
   it("explains when billing is not configured instead of failing silently", async () => {
+    window.location.hash = "#/settings";
     mockApi({ ...loggedIn, "POST /api/installations/42/billing/checkout": () => new Response("", { status: 503 }) });
     render(<App />);
     await userEvent.click(await screen.findByRole("button", { name: "Upgrade" }));
@@ -208,10 +213,11 @@ describe("onboarding and AI model", () => {
     expect(await screen.findByRole("region", { name: "Getting started" })).toBeInTheDocument();
   });
 
-  it("hides it once reviews exist, and shows the AI model section", async () => {
+  it("hides it once reviews exist, and shows the AI model section under Settings", async () => {
+    window.location.hash = "#/settings";
     mockApi(loggedIn);
     render(<App />);
-    await screen.findByRole("region", { name: "Summary" });
+    await screen.findByRole("region", { name: "Plan" });
     expect(screen.queryByRole("region", { name: "Getting started" })).not.toBeInTheDocument();
     const model = screen.getByRole("region", { name: "AI model" });
     expect(await within(model).findByText("Using Reviewly's built-in models")).toBeInTheDocument();
@@ -230,5 +236,99 @@ describe("onboarding and AI model", () => {
     mockApi({ ...loggedIn, "GET /api/config": () => new Response("", { status: 500 }) });
     render(<App />);
     expect(await screen.findByRole("region", { name: "Summary" })).toBeInTheDocument();
+  });
+});
+
+describe("navigation and shell", () => {
+  it("opens on Overview and marks it as the current page", async () => {
+    mockApi(loggedIn);
+    render(<App />);
+    await screen.findByRole("region", { name: "Summary" });
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("link", { name: "Settings" })).not.toHaveAttribute("aria-current");
+    expect(screen.queryByRole("region", { name: "AI model" })).not.toBeInTheDocument();
+    expect(document.title).toBe("Overview · Reviewly");
+  });
+
+  it("switches to Settings when its link is followed, and back", async () => {
+    mockApi(loggedIn);
+    render(<App />);
+    await screen.findByRole("region", { name: "Summary" });
+    window.location.hash = "#/settings";
+    expect(await screen.findByRole("region", { name: "AI model" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Plan" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Summary" })).not.toBeInTheDocument();
+    expect(document.title).toBe("Settings · Reviewly");
+    window.location.hash = "#/overview";
+    expect(await screen.findByRole("region", { name: "Summary" })).toBeInTheDocument();
+  });
+
+  it("treats an unknown hash as Overview", async () => {
+    window.location.hash = "#/nonsense";
+    mockApi(loggedIn);
+    render(<App />);
+    expect(await screen.findByRole("region", { name: "Summary" })).toBeInTheDocument();
+  });
+
+  it("shows no navigation to a signed-out visitor", async () => {
+    mockApi({ "GET /api/me": () => new Response("", { status: 401 }) });
+    render(<App />);
+    await screen.findByRole("link", { name: /sign in with github/i });
+    expect(screen.queryByRole("navigation", { name: "Main" })).not.toBeInTheDocument();
+  });
+
+  it("has a skip link, a main landmark and shows who is signed in", async () => {
+    mockApi(loggedIn);
+    render(<App />);
+    await screen.findByRole("region", { name: "Summary" });
+    expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main");
+    expect(screen.getByText("octocat")).toBeInTheDocument();
+  });
+
+  it("shows a loading placeholder, not a blank page, while data loads", async () => {
+    let release: (r: Response) => void = () => undefined;
+    mockApi({ ...loggedIn, "GET /api/installations/42/overview": () => new Promise<Response>((r) => (release = r)) });
+    render(<App />);
+    expect(await screen.findByRole("status")).toHaveTextContent(/loading your dashboard/i);
+    release(json(overview));
+    expect(await screen.findByRole("region", { name: "Summary" })).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("refreshes on demand and says when it last updated", async () => {
+    let calls = 0;
+    mockApi({
+      ...loggedIn,
+      "GET /api/installations/42/overview": () => json({ ...overview, totals: { ...overview.totals, reviews: 12 + calls++ } }),
+    });
+    render(<App />);
+    const summary = await screen.findByRole("region", { name: "Summary" });
+    expect(within(summary).getByText("Reviews").nextSibling).toHaveTextContent("12");
+    expect(screen.getByText(/Updated just now/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Refresh data" }));
+    await waitFor(() => expect(within(summary).getByText("Reviews").nextSibling).toHaveTextContent("13"));
+  });
+
+  it("links each pull request to GitHub, safely", async () => {
+    mockApi(loggedIn);
+    render(<App />);
+    const recent = await screen.findByRole("region", { name: "Recent reviews" });
+    const link = within(recent).getByRole("link", { name: "acme/widgets#12" });
+    expect(link).toHaveAttribute("href", "https://github.com/acme/widgets/pull/12");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("marks the checklist's key step done when the installation already uses its own key", async () => {
+    mockApi({
+      ...loggedIn,
+      "GET /api/installations/42/overview": () => json({ ...overview, totals: { ...overview.totals, reviews: 0, precision: null } }),
+      "GET /api/installations/42/llm": () => json({ ...llmNone, configured: true, enabled: true, provider: "openai", model: "gpt-4.1" }),
+    });
+    const { container } = render(<App />);
+    await screen.findByRole("region", { name: "Getting started" });
+    await waitFor(() => expect(container.querySelectorAll("li.done")).toHaveLength(2));
   });
 });
