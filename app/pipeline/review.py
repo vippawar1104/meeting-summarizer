@@ -40,6 +40,7 @@ from app.pipeline.prompts import (
     render_user_prompt,
 )
 from app.pipeline.review_llm import GroupResult, review_group
+from app.pipeline.verify import verify_findings
 from app.queue.errors import PermanentError, SkipJob
 from app.rag.feedback import FeedbackContext, past_feedback
 from app.rag.retrieval import Retriever
@@ -286,19 +287,36 @@ class ReviewPipeline:
                         cached = parse_findings(hit)
                         if not cached.errors:
                             CACHE.labels("hit").inc()
-                            return GroupResult(findings=cached.findings, cache_hit=True)
+                            return await self._verified(
+                                router, g, GroupResult(findings=cached.findings, cache_hit=True)
+                            )
                     CACHE.labels("miss").inc()
                 result = await review_group(router, self._system, user)
                 if key is not None and result.clean:
+                    # the cache holds the reviewer's raw answer; verification is redone on every hit
                     await self._cache_put(job.installation_id, key, result.raw_text)
                 if extra is not None:
                     result.prompt_tokens += extra.prompt_tokens
                     result.completion_tokens += extra.completion_tokens
                     result.cost_usd += extra.cost_usd
                     result.context_chunks = len(context)
-                return result
+                return await self._verified(router, g, result)
 
         return list(await asyncio.gather(*(one(g) for g in groups), return_exceptions=True))
+
+    async def _verified(
+        self, router: Completer, group: HunkGroup, result: GroupResult
+    ) -> GroupResult:
+        """Optional second pass that drops findings a fresh reader cannot support from the diff."""
+        if not self._s.verify_findings or not result.findings:
+            return result
+        out = await verify_findings(router, group, result.findings)
+        result.findings = out.kept
+        result.verify_dropped = out.dropped
+        result.prompt_tokens += out.prompt_tokens
+        result.completion_tokens += out.completion_tokens
+        result.cost_usd += out.cost_usd
+        return result
 
     async def _own_router(self, job: Job) -> tuple[RouterLike, str] | None:
         """The installation's own provider, if it configured one. If it is configured but broken we

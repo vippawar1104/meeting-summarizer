@@ -20,6 +20,7 @@ class GroupResult:
     dropped_invalid: int = 0
     model: str = ""
     context_chunks: int = 0
+    verify_dropped: int = 0  # findings the second pass removed
     cache_hit: bool = False
     raw_text: str = ""  # the reply the findings came from
     clean: bool = False  # parsed with no errors and no repair: safe to cache

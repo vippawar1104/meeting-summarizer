@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     max_review_chars: int = 120_000  # beyond this the review is partial
     review_concurrency: int = 4
     max_comments: int = 25
+    verify_findings: bool = False  # second model call that drops unsupported findings (see eval)
     log_level: str = "INFO"
     db_pool_size: int = 5  # per process; each web worker and the worker service has its own pool
     db_max_overflow: int = 5
